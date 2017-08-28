@@ -178,12 +178,12 @@
 (defstruct object name type pose)
 
 
-(defun get-event ()
+(defun get-event-old ()
   (ep-inst "EpInst")
   (u-occurs "EpInst" "EventInst" "Start" "End"))
 
 ;; but why doesn't it work the other way? T_T
-(defun get-event-by-type (type)
+(defun get-event-by-type-old (type)
   (cut:lazy-append
    (prolog-simple (concatenate 'string "ep_inst(EpInst),
     u_occurs(EpInst, EventInst, Start, End),
@@ -193,12 +193,12 @@
     event_type(EventInst, knowrob_u:'" type "')."))))
 
 
-(defun get-all-events (&optional (type NIL))
+(defun get-all-events-old (&optional (type NIL))
   (if type
       (cut:force-ll (get-event-by-type type)) 
       (cut:force-ll (get-event))))
 
-(defun get-actor-effector-pose (EpInst EventInst EventClassName ObjActedOnInst ObjActedOnName ObjShortName EffectorInst EffectorType Start End Pose)
+(defun get-actor-effector-pose(EpInst EventInst EventClassName ObjActedOnInst ObjActedOnName ObjShortName EffectorInst EffectorType Start End Pose)
   (ep-inst EpInst)
   ;(u-occurs EpInst EventInst Start End)
   (event-type EventInst EventClassName)
