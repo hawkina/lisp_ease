@@ -6,4 +6,6 @@
 	((:module "queries"
 	  :components
 	  ((:file "package")
-	   (:file "queries" :depends-on ("package"))))))
+	   (:file "queries" :depends-on ("package"))
+     (:file "basic-queries")
+     (:file "combined-queries")))))

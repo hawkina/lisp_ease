@@ -1,3 +1,3 @@
 (defpackage :queries-pkg
-	(:nicknames :ques)
+	(:nicknames :le)
   (:use :roslisp :cl :json-prolog))
