@@ -75,14 +75,27 @@
       (push (caar (actor-pose episode-instance obj-short end "PoseObjEnd")) poses-list)
       )))
 
-(defun make-time-stamped-pose (pose)
-  (cl-transforms-stamped:make-pose-stamped "map" (roslisp:ros-time)
-                                           (cl-transforms:make-3d-vector (first pose) (second pose) (third pose))
-                                           (cl-transforms:make-quaternion (fourth pose) (fifth pose) (sixth pose) (rest pose))))
+;; there must be a prettier way of doing this...?
+;; gets a list of 7 values as a parameter and makes a cl-transform out of it.
+(defun make-pose (pose)
+  (cl-tf:make-transform
+   (apply #'cl-tf:make-3d-vector (subseq pose 0 3))
+   (apply #'cl-tf:make-quaternion (subseq pose 3 7))))
 
-(defun make-time-stamped-poses ()
-  (make-time-stamped-pose (cut:var-value '|?PoseHandStart| (get-poses-from-event))))
+;; makes a pose of an object and given time. Gets the name of the object as param
+;; Note: the name has to be as the event-get-all-values function knows it
+;; example: '|?PoseHandStart|
+(defun make-poses (name)
+  (make-pose (cut:var-value name (get-poses-from-event))))
 
+;; same as make-pose just for bullet world
+(defun make-bullet-pose (pose)
+  (list
+   (subseq pose 0 3)
+   (subseq pose 3 7)))
+
+(defun make-bullet-poses (name)
+  (make-bullet-pose (cut:var-value name (get-poses-from-event))))
 
 ;splits the list of the pose into pose and quaternion
 ;for specific usecase test function

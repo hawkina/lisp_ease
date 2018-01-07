@@ -41,6 +41,13 @@
                    (assert (btr:object ?world :cereal cereal-3  ((0 0 2) (0 0 0 1))
                                                       :mass 0.2 :color (0 1 1) :size (0.02 0.1 0.1))))))
 
+(defun spawn-cereal-at-pose (name pose)
+ (prolog:prolog `(and (btr:bullet-world ?world)
+                   ;spawns the cerial at the given pose and quaternion.
+                   (assert (btr:object ?world :cereal ,name ,pose
+                                                      :mass 0.2 :color (0 0 1) :size (0.02 0.1 0.1)))))
+  )
+
 (defun move-cereal (px py pz qx qy qz qw)
   (btr-utils:move-object 'cereal-3
                          (cl-transforms:make-pose
