@@ -83,44 +83,7 @@
 (defun make-time-stamped-poses ()
   (make-time-stamped-pose (cut:var-value '|?PoseHandStart| (get-poses-from-event))))
 
-(defun init-bullet-world ()
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                              (assert (btr:object ?world :static-plane :floor ((0 0 0) (0 0 0 1))
-                                                  :normal (0 0 1) :constant 0))))
-  (cram-occupancy-grid-costmap::init-occupancy-grid-costmap)
-  (cram-bullet-reasoning-belief-state::ros-time-init)
-  (cram-location-costmap::location-costmap-vis-init)
-  (cram-tf::init-tf)
-  ;(prolog:prolog '(btr:bullet-world ?world))
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:debug-window ?world)))
-  ;load robot description
-  (let ((robot-urdf
-                   (cl-urdf:parse-urdf
-                    (roslisp:get-param "robot_description"))))
-             (prolog:prolog
-              `(and (btr:bullet-world ?world)
-                    (cram-robot-interfaces:robot ?robot)
-                    (assert (btr:object ?world :urdf ?robot ((0 0 0) (0 0 0 1)) :urdf ,robot-urdf))
-                    (cram-robot-interfaces:robot-arms-parking-joint-states ?robot ?joint-states)
-                    (assert (btr:joint-state ?world ?robot ?joint-states))
-                    (assert (btr:joint-state ?world ?robot (("torso_lift_joint" 0.15d0)))))))
 
- ;spawn kitchen
-  (let ((kitchen-urdf 
-                 (cl-urdf:parse-urdf 
-                  (roslisp:get-param "kitchen_description"))))
-             (prolog:prolog
-              `(and (btr:bullet-world ?world)
-                    (assert (btr:object ?world :semantic-map :kitchen ((0 0 0) (0 0 0 1)) 
-                                        :urdf ,kitchen-urdf))))))
-
-;spawn cerial box
-(defun spawn-cereal ()
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                   ;spawns the cerial at the given pose and quaternion.
-                   (assert (btr:object ?world :cereal cereal-1  ((0 0 2) (0 0 0 1))
-                                                      :mass 0.2 :color (1 0 0) :size (0.02 0.1 0.1))))))
 ;splits the list of the pose into pose and quaternion
 ;for specific usecase test function
 (defun test-pose-lists-parser ()
@@ -136,25 +99,3 @@
       (setq temp (cut:var-value obj poses-list))
       (list (subseq temp 0 3)
             (subseq temp 3 7)))))
-
-(defun move-object (pose obj)
-  (prolog:prolog `(and (btr:bullet-world ?world)
-                         (assert (btr:object-pose ?world ,obj ,pose)))))
-
-(defun test-move-object ()
-  (let ((pose))
-    (progn
-      (setq pose (test-pose-lists-parser))
-      (prolog:prolog `(and (btr:bullet-world ?world)
-                         (assert (btr:object-pose ?world mug-2 ,pose)))))))
-
-; usecase: (move-object (pose-lists-parser '|?PoseObjEnd|))
-; moves object to the pose.
-
-
-(defun check-obj-in-world (object-name)
-  (btr:object btr:*current-bullet-world* object-name))
-
-(defun start-sim ()
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:simulate ?world 10))))
