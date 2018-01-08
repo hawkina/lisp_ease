@@ -33,6 +33,17 @@
 
 
 
+;; same as make-pose just for bullet world
+(defun make-bullet-pose (pose)
+  (list
+   (subseq pose 0 3)
+   (subseq pose 3 7)))
+
+;; name has to be a string and has to include a ?.
+;; ex: ?PoseHandStart
+(defun make-bullet-poses (name)
+  (make-bullet-pose (cut:var-value (intern name) (get-poses-from-event))))
+
 ;spawn cerial box
 ;one can clean the entire world with this: (roslisp-utilities:startup-ros)
 (defun spawn-cereal ()
@@ -41,15 +52,15 @@
                    (assert (btr:object ?world :cereal cereal-3  ((0 0 2) (0 0 0 1))
                                                       :mass 0.2 :color (0 1 1) :size (0.02 0.1 0.1))))))
 
-(defun spawn-cereal-at-pose (name pose)
- (prolog:prolog `(and (btr:bullet-world ?world)
-                   ;spawns the cerial at the given pose and quaternion.
-                   (assert (btr:object ?world :cereal ,name ,pose
-                                                      :mass 0.2 :color (0 0 1) :size (0.02 0.1 0.1)))))
-  )
+(defun spawn-cereal-at-pose (name transform color)
+  (let* ((pose (cl-tf:transform->pose transform))) 
+    (prolog:prolog `(and (btr:bullet-world ?world)
+                                        ;spawns the cerial at the given pose and quaternion.
+                         (assert (btr:object ?world :cereal ,name ,pose
+                                             :mass 0.2 :color ,color :size (0.02 0.1 0.1)))))))
 
 (defun move-cereal (px py pz qx qy qz qw)
-  (btr-utils:move-object 'cereal-3
+  (btr-utils:move-object 'cereal-5
                          (cl-transforms:make-pose
                           (cl-transforms:make-3d-vector px py pz)
                           (cl-transforms:make-quaternion qx qy qz qw))))
@@ -101,9 +112,10 @@
                           (cl-transforms:make-quaternion qx qy qz qw))))
 
 
-(defun move-object (pose obj)
-  (prolog:prolog `(and (btr:bullet-world ?world)
-                         (assert (btr:object-pose ?world ,obj ,pose)))))
+(defun move-object (transform obj)
+  (let* ((pose (cl-tf:transform->pose transform)))
+    (prolog:prolog `(and (btr:bullet-world ?world)
+                         (assert (btr:object-pose ?world ,obj ,pose))))))
 
 (defun test-move-object ()
   (let ((pose))
@@ -122,3 +134,43 @@
 (defun start-sim ()
   (prolog:prolog '(and (btr:bullet-world ?world)
                               (btr:simulate ?world 10))))
+
+(defun poses-demo ()
+ ; (spawn-cereal-at-pose 'cereal-2 (make-bullet-poses "?PoseCameraStart") '(1 0 0))
+  (spawn-cereal-at-pose 'cereal-4 (apply-bullet-transform (make-poses "?PoseObjStart")) '(1 1 0))
+
+  ;; move objects like needed
+  (move-object (apply-bullet-transform (swap-y-axis (make-poses "?PoseObjStart"))) 'cereal-4)
+  (move-object (apply-bullet-transform (swap-y-axis (make-poses "?PoseObjEnd"))) 'cereal-5))
+
+;; converts the y-value of the "3d-vector" to it's - value
+;; Careful! If given a pose which is stored in a variable,
+;; the variable will be overwritten
+(defun swap-bullet-y-axis (pose)
+  (let* ((vector (first pose)))
+    (setf (second vector)
+          (- (second vector)))
+    (list vector
+          (second pose))))
+
+;; for proper transforms
+(defun swap-y-axis (pose)
+  (let* ((vector (cl-tf:translation pose)))
+    (cl-tf:make-transform
+     (cl-tf:make-3d-vector (cl-tf:x vector) (- (cl-tf:y vector)) (cl-tf:z vector))
+     (cl-tf:rotation pose))))
+
+(defun swap-x-axis (pose)
+  (let* ((vector (cl-tf:translation pose)))
+    (cl-tf:make-transform
+     (cl-tf:make-3d-vector (-  (cl-tf:x vector)) (cl-tf:y vector) (cl-tf:z vector))
+     (cl-tf:rotation pose))))
+
+;; closest one so far
+(defun apply-bullet-transform (transform)
+  (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector -1.2 -3.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 0 1)
+                          4.5))
+   transform))

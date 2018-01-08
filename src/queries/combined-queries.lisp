@@ -84,18 +84,9 @@
 
 ;; makes a pose of an object and given time. Gets the name of the object as param
 ;; Note: the name has to be as the event-get-all-values function knows it
-;; example: '|?PoseHandStart|
+;; example: "?PoseHandStart"
 (defun make-poses (name)
-  (make-pose (cut:var-value name (get-poses-from-event))))
-
-;; same as make-pose just for bullet world
-(defun make-bullet-pose (pose)
-  (list
-   (subseq pose 0 3)
-   (subseq pose 3 7)))
-
-(defun make-bullet-poses (name)
-  (make-bullet-pose (cut:var-value name (get-poses-from-event))))
+  (make-pose (cut:var-value (intern name) (get-poses-from-event))))
 
 ;splits the list of the pose into pose and quaternion
 ;for specific usecase test function
@@ -112,3 +103,5 @@
       (setq temp (cut:var-value obj poses-list))
       (list (subseq temp 0 3)
             (subseq temp 3 7)))))
+
+
