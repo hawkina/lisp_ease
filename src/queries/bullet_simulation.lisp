@@ -148,6 +148,8 @@
   (spawn-cereal-at-pose 'cereal-7 (apply-bullet-transform (make-poses "?PoseCameraEnd")) '(0 0 0.6))
   
   ;; move objects like needed
+  (move-object (cl-tf:make-transform (cl-tf:make-identity-vector) (cl-tf:make-identity-rotation)) 'cereal-1)
+  
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'cereal-2)
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjEnd"))) 'cereal-3)
 
@@ -186,10 +188,15 @@
   (let* ((quaternion (cl-tf:rotation pose)))
     (cl-tf:make-transform
      (cl-tf:translation pose)
-     (cl-tf:make-quaternion (cl-tf:y quaternion) (cl-tf:z quaternion) (cl-tf:w  quaternion) (cl-tf:x quaternion))))
+     (cl-tf:make-quaternion (cl-tf:y quaternion) (cl-tf:z quaternion) (cl-tf:w  quaternion) (cl-tf:x quaternion)))))
 
-  )
 
+;; remove z so we can move the robot to the according position
+(defun remove-z (pose)
+  (let* ((translation (cl-tf:translation pose)))
+    (cl-tf:make-transform
+     (cl-tf:make-3d-vector (cl-tf:x translation) (cl-tf:y translation) 0)
+     (cl-tf:rotation pose))))
 
 ;; closest one so far
 (defun apply-bullet-transform (transform)
@@ -197,7 +204,7 @@
    (cl-tf:make-transform (cl-tf:make-3d-vector -2.7 -1.0 0.0)
                          (cl-tf:axis-angle->quaternion
                           (cl-tf:make-3d-vector 0 0 1)
-                          pi)) ;; about 230°?
+                          pi)) 
    transform))
 
 (defun move-all-boxes ()
@@ -209,3 +216,24 @@
 
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseCameraStart"))) 'cereal-6)
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseCameraEnd"))) 'cereal-7))
+
+;;(make-poses "?PoseCameraStart")
+(defun move-robot (transform)
+  ;; make the transform a viable robot position
+  (let* ((pose (cl-tf:transform->pose  (remove-z (apply-bullet-transform (quaternion-w-flip transform)))))
+         (quaternion (cl-tf:orientation pose))
+         (x nil)
+         (y nil))
+    ;; make quaternion
+    ;; make into matrix, get x and y values
+    (setq x (aref (cl-tf:quaternion->matrix quaternion) 2 0))
+    (setq y (aref (cl-tf:quaternion->matrix quaternion) 2 1))
+    (setq quaternion (cl-tf:axis-angle->quaternion (cl-tf:make-3d-vector 0 0 1) (atan (/ y x))))
+    
+    (setq pose (cl-tf:make-pose
+                (cl-tf:origin pose)
+                quaternion))
+    
+    (prolog:prolog `(and (btr:bullet-world ?world)
+                         (assert (btr:object-pose ?world cram-pr2-description:pr2 ,pose))))))
+
