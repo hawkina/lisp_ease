@@ -226,9 +226,9 @@
          (y nil))
     ;; make quaternion
     ;; make into matrix, get x and y values
-    (setq x (aref (cl-tf:quaternion->matrix quaternion) 2 0))
-    (setq y (aref (cl-tf:quaternion->matrix quaternion) 2 1))
-    (setq quaternion (cl-tf:axis-angle->quaternion (cl-tf:make-3d-vector 0 0 1) (atan (/ y x))))
+    (setq x (aref (cl-tf:quaternion->matrix quaternion) 0 2))
+    (setq y (aref (cl-tf:quaternion->matrix quaternion) 1 2))
+    (setq quaternion (cl-tf:axis-angle->quaternion (cl-tf:make-3d-vector 0 0 1) (atan y x)))
     
     (setq pose (cl-tf:make-pose
                 (cl-tf:origin pose)
