@@ -237,3 +237,27 @@
     (prolog:prolog `(and (btr:bullet-world ?world)
                          (assert (btr:object-pose ?world cram-pr2-description:pr2 ,pose))))))
 
+(defun move-head (pose)
+  (prolog:prolog `(and (btr:bullet-world ?world)
+                       (assert (btr:head-pointing-at ?world cram-pr2-description:pr2 ,pose)))))
+
+(defun move-head2 (pose)
+  (prolog:prolog `(and (btr:bullet-world ?world)
+                       (assert (btr:calculate-pan-tilt cram-pr2-description:pr2 ?head_pan_link ?head_tilt_link ,pose)))))
+
+;; this one is the only one that works so far?
+;; head keeps moving though?
+(defun move-head-test (pose)
+(let* ((bullet-pose (remove-z (apply-bullet-transform (quaternion-w-flip pose)))))
+  (cram-pr2-projection::look-at-pose-stamped
+   (cl-tf:make-pose-stamped
+    "map"
+    0.0
+    (cl-tf:translation bullet-pose)
+    (cl-tf:rotation bullet-pose)))))
+
+;;if in back 'cereal-5
+(defun is-in-view (name-of-object)
+  (prolog:prolog `(and (btr:bullet-world ?world)
+                              (cram-robot-interfaces:robot ?robot)
+                              (btr:visible ?world ?robot ,name-of-object))))
