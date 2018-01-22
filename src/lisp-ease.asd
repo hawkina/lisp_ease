@@ -15,4 +15,5 @@
 	   (:file "queries" :depends-on ("package"))
      	   (:file "basic-queries")
      	   (:file "combined-queries")
-     	   (:file "bullet_simulation" :depends-on ("package"))))))
+     	   (:file "bullet_simulation" :depends-on ("package"))
+     	   (:file "items" :depends-on ("package"))))))

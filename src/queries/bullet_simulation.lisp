@@ -19,7 +19,7 @@
               `(and (btr:bullet-world ?world)
                     (cram-robot-interfaces:robot ?robot)
                     (assert (btr:object ?world :urdf ?robot ((0 0 0) (0 0 0 1)) :urdf ,robot-urdf))
-                    (cram-robot-interfaces:robot-arms-parking-joint-states ?robot ?joint-states)
+                    (cram-robot-interfaces:robot-arms-carrying-joint-states ?robot ?joint-states)
                     (assert (btr:joint-state ?world ?robot ?joint-states))
                     (assert (btr:joint-state ?world ?robot (("torso_lift_joint" 0.15d0)))))))
 
@@ -239,7 +239,8 @@
 
 (defun move-head (pose)
   (prolog:prolog `(and (btr:bullet-world ?world)
-                       (assert (btr:head-pointing-at ?world cram-pr2-description:pr2 ,pose)))))
+                       (cram-robot-interfaces:robot ?robot )
+                       (btr:head-pointing-at ?world ?robot ,pose))))
 
 (defun move-head2 (pose)
   (prolog:prolog `(and (btr:bullet-world ?world)
@@ -261,3 +262,9 @@
   (prolog:prolog `(and (btr:bullet-world ?world)
                               (cram-robot-interfaces:robot ?robot)
                               (btr:visible ?world ?robot ,name-of-object))))
+
+
+(defun add-bowl ()
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                     (assert (btr:object ?world :mesh edeka-red-bowl ((0 1 2) (0 0 0 1))
+                                         :mass 0.2 :color (1 1 1) :mesh :edeka-red-bowl)))))
