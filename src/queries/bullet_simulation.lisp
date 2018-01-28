@@ -1,6 +1,10 @@
 (in-package :le)
 
 (defun init-bullet-world ()
+  ;; append own meshes to meshes list so that they can be loaded.
+  (append-meshes-to-list)
+  
+  ;; initialization from the tutorial
   (prolog:prolog '(and (btr:bullet-world ?world)
                               (assert (btr:object ?world :static-plane :floor ((0 0 0) (0 0 0 1))
                                                   :normal (0 0 1) :constant 0))))
@@ -266,5 +270,30 @@
 
 (defun add-bowl ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                     (assert (btr:object ?world :mesh edeka-red-bowl ((0 1 2) (0 0 0 1))
-                                         :mass 0.2 :color (1 1 1) :mesh :edeka-red-bowl)))))
+                   (assert (btr:object ?world :mesh edeka-red-bowl ((0 1 2) (0 0 0 1))
+                            :mass 0.2 :color (1 1 1) :mesh :edeka-red-bowl)))))
+(defun add-cup ()
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh cup-eco-orange ((0 2 2) (0 0 0 1))
+                            :mass 0.2 :color (1 1 0) :mesh :cup-eco-orange)))))
+(defun add-muesli ()
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh koelln-muesli-knusper-honig-nuss ((0 3 2) (0 0 0 1))
+                            :mass 0.2 :color (1 0 1) :mesh :koelln-muesli-knusper-honig-nuss)))))
+
+(defun add-spoon ()
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh spoon-blue-plastic ((0 4 2) (0 0 0 1))
+                            :mass 0.2 :color (1 0 0) :mesh :spoon-blue-plastic)))))
+(defun add-milch ()
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh weide-milch-small ((0 6 2) (0 0 0 1))
+                            :mass 0.2 :color (0 0 1) :mesh :weide-milch-small)))))
+
+;; just when I want to spawn all of them 
+(defun spawn-all-own-obj ()
+  (add-bowl)
+  (add-cup)
+  (add-muesli)
+  (add-spoon)
+  (add-milch))

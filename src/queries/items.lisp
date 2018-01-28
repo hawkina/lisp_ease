@@ -1,26 +1,13 @@
 (in-package :le)
 
 (defparameter *mesh-files*
-  '((:edeka-red-bowl "package://lisp_ease/resource/edeka_red_bowl.stl" t)))
+  '((:edeka-red-bowl "package://lisp_ease/resource/edeka_red_bowl.stl" t)
+    (:cup-eco-orange "package://lisp_ease/resource/cup_eco_orange.stl" t)
+    (:koelln-muesli-knusper-honig-nuss "package://lisp_ease/resource/koelln_muesli_knusper_honig_nuss.stl" t)
+    (:spoon-blue-plastic "package://lisp_ease/resource/spoon_blue_plastic.stl" t)
+    (:weide-milch-small "package://lisp_ease/resource/weide_milch_small.stl" t)))
 
-
-;;btr: add-object?
-
-;(defclass item (object)
-;  ((types :reader item-types :initarg :types)))
-
-;(defmethod add-object ((world bt-world) (type (eql :edeka-red-bowl)) name pose
-;                       &key mass (color '(0.5 0.5 0.5 1.0)) size)
-;  (assert size)
-;  (btr::make-item world name (list type)
-;             (list
-;              (make-instance 'rigid-body
-;                :name name :mass mass :pose (btr::ensure-pose pose)
-;                :collision-shape (make-instance 'colored-box-shape ;might also be 'colored-sphere-shape
-;                                   :half-extents (btr::ensure-vector size)
-;                                   :color color)))))
-
-
+; appends the newly defined objects in the *mesh-files* variable to the *mesh-files*
+; of btr, so that they can be loaded
 (defun append-meshes-to-list ()
-  ;(append btr::*mesh-files* '((:edeka-red-bowl "package://lisp_ease/resource/edeka_red_bowl_stl" T)))
-  (btr:add-objects-to-mesh-list "lisp_ease"))
+     (btr:add-objects-to-mesh-list "lisp_ease"))
