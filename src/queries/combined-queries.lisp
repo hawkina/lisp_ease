@@ -40,7 +40,7 @@
 
 
 (defun get-poses-from-event ()
-  (let ((episode-instance)
+  (let* ((episode-instance)
         (event-inst)
         (hand-inst)
         (hand-type)
@@ -54,6 +54,8 @@
         (camera-short)
         (obj-short))
     (progn
+      ;;clean poses list before unexpected stuff happenes. 
+      (setq poses-list nil)
       (setq episode-instance (parse-str (ep-inst "EpInst")))
       (setq event-inst (parse-str (cut:var-value '|?EventInst| (car (event-type "EventInst" "knowrob:'GraspingSomething'")))))
       (setq temp-list (u-occurs episode-instance event-inst "Start" "End"))
@@ -73,7 +75,13 @@
       (push (caar (actor-pose episode-instance camera-short end "PoseCameraEnd")) poses-list)
       (push (caar (actor-pose episode-instance obj-short start "PoseObjStart")) poses-list)
       (push (caar (actor-pose episode-instance obj-short end "PoseObjEnd")) poses-list)
-      )))
+      (push (list '|?HandInstShortName| hand-inst-short) poses-list))))
+
+
+
+
+
+
 
 ;; there must be a prettier way of doing this...?
 ;; gets a list of 7 values as a parameter and makes a cl-transform out of it.
@@ -86,7 +94,21 @@
 ;; Note: the name has to be as the event-get-all-values function knows it
 ;; example: "?PoseHandStart"
 (defun make-poses (name)
-  (make-pose (cut:var-value (intern name) (get-poses-from-event))))
+  (make-pose (cut:var-value (intern name) poses-list)))
+
+;; for getting infos out of the event data which are not poses
+;; ?var is the variable name we want to get infos about
+(defun get-info (?var)
+  (cut:var-value (intern ?var) poses-list))
+
+;; returns the hand used in the curretnly loaded episode
+(defun get-hand ()
+  (if (search "Left" (car (get-info "?HandInstShortName")))
+      :left
+      (if (search "Right" (car (get-info "?HandInstShortName")))
+          :right
+          NIL)))
+
 
 ;splits the list of the pose into pose and quaternion
 ;for specific usecase test function

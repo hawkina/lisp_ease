@@ -109,33 +109,4 @@
   (cram-tf:translate-transform-stamped grasp-transform :x-offset *muesli-pregrasp-xy-offset*))
 
 
-;; --- DESIG FACT GROUP --------------------------------------------------------------------
 
-(cram-prolog:def-fact-group ba-pnp-object-knowledge (object-rotationally-symmetric orientation-matters object-type-grasp)
-
-  (cram-prolog:<- (object-rotationally-symmetric ?object-type)
-    (member ?object-type (:ba-muesli :ba-milk :ba-spoon :ba-cup  :ba-bowl)))
-
-  (cram-prolog:<- (orientation-matters ?object-type)
-    (member ?object-type (:ba-spoon)))
-
-  (cram-prolog:<- (object-type-grasp :ba-spoon :top))
-  ;; (<- (object-type-grasp :spoon :top))
-  ;; (<- (object-type-grasp :fork :top))
-  ;; (<- (object-type-grasp :knife :top))
-
-  (cram-prolog:<- (object-type-grasp :ba-milk :side))
-  (cram-prolog:<- (object-type-grasp :ba-milk :front))
-
-  (cram-prolog:<- (object-type-grasp :ba-cup :front))
-  ;; (<- (object-type-grasp :cup :side))
-  ;; (<- (object-type-grasp :cup :top))
-
-  ;; (<- (object-type-grasp :cereal :top))
-  (cram-prolog:<- (object-type-grasp :ba-muesli :back))
-  (cram-prolog:<- (object-type-grasp :ba-muesli :front))
-  ;; (<- (object-type-grasp :breakfast-cereal :top))
-  ;; (<- (object-type-grasp :breakfast-cereal :back))
-  ;; (<- (object-type-grasp :breakfast-cereal :front))
-
-  (cram-prolog:<- (object-type-grasp :ba-bowl :top)))
