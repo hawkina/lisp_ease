@@ -3,6 +3,9 @@
 ;;--------------------------- from tutorials ----------------------------
 
 ;;(make-poses "?PoseCameraStart")
+;; move robot away from the original pose by this offset. 
+(defparameter *human-feet-offset* 0.3 )
+
 (defun set-grasp-base-pose (transform)
    ;; make the transform a viable robot position
   (let* ((pose (cl-tf:transform->pose  (remove-z (apply-bullet-transform (quaternion-w-flip transform)))))
@@ -20,7 +23,10 @@
                (cl-transforms-stamped:make-pose-stamped
                 "map"
                 0.0
-                (cl-tf:origin pose)
+                (cl-tf:make-3d-vector
+                 (+ (cl-tf:x (cl-tf:origin pose)) *human-feet-offset*)
+                 (cl-tf:y (cl-tf:origin pose))
+                 0)
                 quaternion))))
 
 ;;(make-poses "?PoseObjStart")

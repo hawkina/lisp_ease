@@ -14,111 +14,93 @@
                             (type looking)
                             (target (desig:a location (pose ?grasping-look-pose)))))))))
 
-(defun pick-up-cereal (&optional (?arm :left))
+(defun pick-up-cereal (&optional (?arm :right))
     (let* ((?cereal-desig nil))
         (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
            (cpl:top-level
              (setf ?cereal-desig
-             (exe:perform (desig:an action
-                                    (type detecting)
-                                    (object (desig:an object (type cereal))))))
-             (print  (desig:reference 
-                      (desig:an action
-                                (type picking-up)
-                                (arm ?arm)
-                                (object ?cereal-desig))))
+                   (exe:perform (desig:an action
+                                          (type detecting)
+                                          (object (desig:an object (type ba-muesli))))))
+             (print  (desig:reference
+                       (desig:an action
+                                 (type picking-up)
+                                 (arm ?arm)
+                                 (object ?cereal-desig))))
              (exe:perform 
               (desig:an action
                         (type picking-up)
                         (arm ?arm)
-                        (object ?cereal-desig)))))))
-
-
-
-
-
-
-;---------------------------------------------------------------
-
-(defvar *perceived-obj* nil)
-(defun get-perceived-cereal-desig ()
-  (let* ((?cereal-desig nil))
-        (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-           (cpl:top-level
-             (setf ?cereal-desig
-                   (pp-plans::perceive (desig:an object (type cereal))))))))
-
-
+                        (object ?cereal-desig)))))))             
 
 ;works
-(defun move-torso-up ()
+(defun move-torso-up (?angle)
    (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
            (cpl:top-level
              (exe:perform
-              (desig:a motion (type moving-torso) (joint-angle 0.3))))))
+              (desig:a motion (type moving-torso) (joint-angle ?angle))))))
 
 
 
-
-
-;;; doesn't work
-(defun pick-up (?object-designator &optional (?arm :left))
-  (exe:perform (desig:an action
-                         (type picking-up)
-                         (arm ?arm)
-                         (object ?object-designator))))
-
-(defun test ()
-(proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-    (cpl:top-level
-      (let ((?perceived-obj (get-perceived-cereal-desig)))
-        (pick-up ?perceived-obj :left)
-  ))))
-
-
-
-
-
-
-
-
-
-
-;;---------------------------------------------------------------
-(defun get-transform-base-footprint-to-map ()
-  (cram-projection::projection-environment-result-result (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment (cl-tf:lookup-transform cram-tf:*transformer* "map" "base_footprint"))))
-
-(defun get-transform-perceived-obj ()
-  (cpl:top-level
-    (cram-projection::projection-environment-result-result
-     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-       (pp-plans::perceive (desig:an object (type cereal)))))))
-
-(defun footprint-to-map-transform ()
-  (cl-transforms-stamped:transform*
-   (get-transform-base-footprint-to-map)
-   (get-transform-perceived-obj)))
-
-;how to not hard code this
-(defun perceive-obj ()
+(defun reachability-tester ()
   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-           (cpl:top-level
-             (pp-plans::perceive (desig:an object (type cereal))))))
+    (cpl:top-level 
+      (let ((?pose (cl-transforms-stamped:make-pose-stamped
+                    "base_footprint"
+                    0.0
+                    (cl-tf:make-3d-vector 0.5102766878660931d0 0.06244204412128673d0 0.8842221563061078d0)
+                    (cl-tf:make-quaternion 0.1263345392921927d0 -0.9919876636802037d0 -2.308838915662856d-5 6.0027490527310316d-6))))
+        (exe:perform (desig:an motion
+                               (type moving-tcp)
+                               (left-target (desig:a location (pose ?pose)))))))))
 
-
-
-(defun grasp-obj ()
-  (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-  (cpl:top-level
-    (let ((?perceived-obj-desig nil))
-      ;(exe:perform
-      ;(desig:a motion (type moving-torso) (joint-angle 0.3)))
-      (setq *perceived-obj* (perceive-obj))
-   ;   (setq ?perceived-obj-desig ?test)
-          
+;; from mobile pick place ---------------------------------------------------
+(cpl:def-cram-function pick-up (?object-designator
+                                ?arm ?gripper-opening  ?grip-effort ?grasp
+                                ?left-reach-poses ?right-reach-poses
+                                ?left-lift-poses ?right-lift-poses)
+  (cpl:par
+    (roslisp:ros-info (pick-place pick-up) "Opening gripper")
+    (exe:perform
+     (desig:an action
+               (type setting-gripper)
+               (gripper ?arm)
+               (position ?gripper-opening)))
+    (roslisp:ros-info (pick-place pick-up) "Reaching")
+    (cpl:with-failure-handling
+        ((common-fail:manipulation-low-level-failure (e)
+           (roslisp:ros-warn (pp-plans pick-up)
+                             "Manipulation messed up: ~a~%Ignoring."
+                             e)
+           (return)))
       (exe:perform
        (desig:an action
-                 (type picking-up)
-                 (object ?perceived-obj-desig)
-                 (arm right)))))))
+                 (type reaching)
+                 (left-poses ?left-reach-poses)
+                 (right-poses ?right-reach-poses)))))
+  (roslisp:ros-info (pick-place pick-up) "Gripping")
+  (exe:perform
+   (desig:an action
+             (type gripping)
+             (gripper ?arm)
+             (effort ?grip-effort)
+             (object ?object-designator)))
+  (roslisp:ros-info (pick-place pick-up) "Assert grasp into knowledge base")
+  (cram-occasions-events:on-event
+   (make-instance 'cpoe:object-attached
+     :object-name (desig:desig-prop-value ?object-designator :name)
+     :arm ?arm))
+  (roslisp:ros-info (pick-place pick-up) "Lifting")
+  (cpl:with-failure-handling
+      ((common-fail:manipulation-low-level-failure (e)
+         (roslisp:ros-warn (pp-plans pick-up)
+                           "Manipulation messed up: ~a~%Ignoring."
+                           e)
+         (return)))
+    (exe:perform
+     (desig:an action
+               (type lifting)
+               (left-poses ?left-lift-poses)
+               (right-poses ?right-lift-poses)))))
+
 

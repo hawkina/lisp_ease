@@ -4,6 +4,9 @@
   ;; append own meshes to meshes list so that they can be loaded.
   (append-meshes-to-list)
   
+  ;; init tf early. Otherwise there will be excaptions.
+  (cram-tf::init-tf)
+  
   ;;set costmap parameters
   (prolog:def-fact-group costmap-metadata ()
     (prolog:<- (location-costmap:costmap-size 12 12))
@@ -18,7 +21,7 @@
   (setf cram-bullet-reasoning-belief-state:*robot-parameter* "robot_description")
   (setf cram-bullet-reasoning-belief-state:*kitchen-parameter* "kitchen_description")
 
- (sem-map:get-semantic-map)
+  (sem-map:get-semantic-map)
 
   (cram-occasions-events:clear-belief)
 
@@ -33,7 +36,7 @@
   (cram-occupancy-grid-costmap::init-occupancy-grid-costmap)
   (cram-bullet-reasoning-belief-state::ros-time-init)
   (cram-location-costmap::location-costmap-vis-init)
-  (cram-tf::init-tf)
+ 
   ;(prolog:prolog '(btr:bullet-world ?world))
   (prolog:prolog '(and (btr:bullet-world ?world)
                               (btr:debug-window ?world)))
@@ -55,7 +58,7 @@
                   (roslisp:get-param "kitchen_description"))))
              (prolog:prolog
               `(and (btr:bullet-world ?world)
-                    (assert (btr:object ?world :semantic-map my-no-urdf-kitchen ((0 0 0) (0 0 0 1)) ))))))
+                    (assert (btr:object ?world :semantic-map no-urdf-kitchen ((0 0 0) (0 0 0 1)) ))))))
 
 
 
@@ -148,7 +151,7 @@
     (progn
       (setq pose (test-pose-lists-parser))
       (prolog:prolog `(and (btr:bullet-world ?world)
-                         (assert (btr:object-pose ?world mug-2 ,pose)))))))
+                           (assert (btr:object-pose ?world mug-2 ,pose)))))))
 
 ; usecase: (move-object (pose-lists-parser '|?PoseObjEnd|))
 ; moves object to the pose.
@@ -240,7 +243,13 @@
                           pi)) 
    transform))
 
-
+(defun apply-bullet-rotation (transform)
+    (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 0 1)
+                          pi)) 
+   transform))
 
 (defun move-all-boxes ()
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'cereal-2)
@@ -301,25 +310,26 @@
 
 (defun add-bowl ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh edeka-red-bowl ((0 1 2) (0 0 0 1))
-                            :mass 0.2 :color (1 1 1) :mesh :edeka-red-bowl)))))
+                   (assert (btr:object ?world :mesh ba-bowl ((0 1 2) (0 0 0 1))
+                            :mass 0.2 :color (1 1 1) :mesh :ba-bowl)))))
 (defun add-cup ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh cup-eco-orange ((0 2 2) (0 0 0 1))
-                            :mass 0.2 :color (1 1 0) :mesh :cup-eco-orange)))))
+                   (assert (btr:object ?world :mesh ba-cup ((0 2 2) (0 0 0 1))
+                            :mass 0.2 :color (1 1 0) :mesh :ba-cup)))))
 (defun add-muesli ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh koelln-muesli-knusper-honig-nuss ((0 3 2) (0 0 0 1))
-                            :mass 0.2 :color (1 0 1) :mesh :koelln-muesli-knusper-honig-nuss)))))
+                   (assert (btr:object ?world :mesh ba-muesli ((0 3 2) (0 0 0 1))
+                            :mass 0.2 :color (1 0 1) :mesh :ba-muesli)))))
 
 (defun add-spoon ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh spoon-blue-plastic ((0 4 2) (0 0 0 1))
-                            :mass 0.2 :color (0 0 1) :mesh :spoon-blue-plastic)))))
-(defun add-milch ()
+                   (assert (btr:object ?world :mesh ba-spoon ((0 4 2) (0 0 0 1))
+                            :mass 0.2 :color (0 0 1) :mesh :ba-spoon)))))
+(defun add-milk ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh weide-milch-small ((0 6 2) (0 0 0 1))
-                            :mass 0.2 :color (1 0 0) :mesh :weide-milch-small)))))
+                   (assert (btr:object ?world :mesh ba-milk ((0 6 2) (0 0 0 1))
+                            :mass 0.2 :color (1 0 0) :mesh :ba-milk)))))
+
 
 ;; just when I want to spawn all of them 
 (defun spawn-all-own-obj ()
@@ -327,4 +337,4 @@
   (add-cup)
   (add-muesli)
   (add-spoon)
-  (add-milch))
+  (add-milk))

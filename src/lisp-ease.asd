@@ -19,4 +19,5 @@
      	   (:file "items" :depends-on ("package"))
      	   (:file "plans" :depends-on ("package"))
      	   (:file "designators" :depends-on ("package"))
-     	   (:file "interfaces" :depends-on ("package"))))))
+     	   (:file "interfaces" :depends-on ("package"))
+         (:file "grasping" :depends-on ("package"))))))
