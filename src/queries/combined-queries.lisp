@@ -105,3 +105,11 @@
             (subseq temp 3 7)))))
 
 
+;----------------------------
+(defun init-test ()
+  (start-ros-node "lisp_ease")
+  (register-ros-package "knowrob_robcog")
+  (u-load-episodes "/media/hasu/Exte/episodes/Virtual-Games/own-setup/rcg_0/Episodes/")
+  (owl-parse "/media/hasu/Exte/episodes/Virtual-Games/own-setup/rcg_0/SemanticMap.owl")
+  (connect-to-db "Virtual-Games_own-setup")
+  (map-marker-init))

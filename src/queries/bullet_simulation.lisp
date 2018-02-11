@@ -4,6 +4,28 @@
   ;; append own meshes to meshes list so that they can be loaded.
   (append-meshes-to-list)
   
+  ;;set costmap parameters
+  (prolog:def-fact-group costmap-metadata ()
+    (prolog:<- (location-costmap:costmap-size 12 12))
+    (prolog:<- (location-costmap:costmap-origin -6 -6))
+    (prolog:<- (location-costmap:costmap-resolution 0.05))
+
+    (prolog:<- (location-costmap:costmap-padding 0.2))
+    (prolog:<- (location-costmap:costmap-manipulation-padding 0.2))
+    (prolog:<- (location-costmap:costmap-in-reach-distance 0.6))
+    (prolog:<- (location-costmap:costmap-reach-minimal-distance 0.2)))
+  ;; set params
+  (setf cram-bullet-reasoning-belief-state:*robot-parameter* "robot_description")
+  (setf cram-bullet-reasoning-belief-state:*kitchen-parameter* "kitchen_description")
+
+ (sem-map:get-semantic-map)
+
+  (cram-occasions-events:clear-belief)
+
+  (setf cram-tf:*tf-default-timeout* 2.0)
+
+  (setf prolog:*break-on-lisp-errors* t)
+  
   ;; initialization from the tutorial
   (prolog:prolog '(and (btr:bullet-world ?world)
                               (assert (btr:object ?world :static-plane :floor ((0 0 0) (0 0 0 1))
@@ -64,7 +86,7 @@
                                              :mass 0.2 :color ,color :size (0.02 0.1 0.1)))))))
 
 (defun move-cereal (px py pz qx qy qz qw)
-  (btr-utils:move-object 'cereal-2
+  (btr-utils:move-object 'cereal-4
                          (cl-transforms:make-pose
                           (cl-transforms:make-3d-vector px py pz)
                           (cl-transforms:make-quaternion qx qy qz qw))))
@@ -85,7 +107,7 @@
                    (assert (btr:object ?world :cereal z-axis  ((0 0 2) (0 0 0 1))
                                                       :mass 0.0 :color (0 0 1) :size (0.02 0.02 0.2)))))
 
-  ;; position all 3 axes
+  ;; position all 3 axes,
   (btr-utils:move-object 'x-axis
                          (cl-transforms:make-pose
                           (cl-transforms:make-3d-vector (+ x factor) y z)
@@ -135,9 +157,16 @@
 (defun check-obj-in-world (object-name)
   (btr:object btr:*current-bullet-world* object-name))
 
+ 
 (defun start-sim ()
+  "simulates the world for a second."
   (prolog:prolog '(and (btr:bullet-world ?world)
                               (btr:simulate ?world 10))))
+
+(defun check-stability-of-sim ()
+  "checks if the simulation is stable, or if run for a longer time, some objects would change their position. If the result is anything but NIL, the world is stable."
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                              (btr:simulate ?world 100))))
 
 (defun poses-demo ()
   (spawn-cereal-at-pose 'cereal-1 (apply-bullet-transform (make-poses "?PoseObjStart")) '(1 1 1))
@@ -211,6 +240,8 @@
                           pi)) 
    transform))
 
+
+
 (defun move-all-boxes ()
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'cereal-2)
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjEnd"))) 'cereal-3)
@@ -245,7 +276,7 @@
   (prolog:prolog `(and (btr:bullet-world ?world)
                        (cram-robot-interfaces:robot ?robot )
                        (btr:head-pointing-at ?world ?robot ,pose))))
-
+;;deprecated
 (defun move-head2 (pose)
   (prolog:prolog `(and (btr:bullet-world ?world)
                        (assert (btr:calculate-pan-tilt cram-pr2-description:pr2 ?head_pan_link ?head_tilt_link ,pose)))))
@@ -284,11 +315,11 @@
 (defun add-spoon ()
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh spoon-blue-plastic ((0 4 2) (0 0 0 1))
-                            :mass 0.2 :color (1 0 0) :mesh :spoon-blue-plastic)))))
+                            :mass 0.2 :color (0 0 1) :mesh :spoon-blue-plastic)))))
 (defun add-milch ()
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh weide-milch-small ((0 6 2) (0 0 0 1))
-                            :mass 0.2 :color (0 0 1) :mesh :weide-milch-small)))))
+                            :mass 0.2 :color (1 0 0) :mesh :weide-milch-small)))))
 
 ;; just when I want to spawn all of them 
 (defun spawn-all-own-obj ()
