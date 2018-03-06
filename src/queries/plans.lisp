@@ -59,8 +59,14 @@
              (exe:perform
               (desig:a motion (type moving-torso) (joint-angle ?angle))))))
 
+(defun execute-pick-and-place ()
+  (pick-and-place  (set-grasp-base-pose (make-poses "?PoseCameraStart"))
+                   (set-grasp-look-pose (make-poses "?PoseObjStart"))
+                   (set-grasp-base-pose (make-poses "?PoseCameraEnd"))
+                   (set-grasp-look-pose (make-poses "?PoseObjEnd"))
+                   (set-place-pose (make-poses "?PoseObjEnd"))))
 
-(defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose )
+(defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose) 
   (let* ((?obj-desig nil)
          (?arm (get-hand)))
     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
@@ -84,12 +90,17 @@
                            (type picking-up)
                            (arm ?arm)
                            (object ?obj-desig))))
+        ;; pick uo obj
         (exe:perform 
          (desig:an action
                    (type picking-up)
                    (arm ?arm)
                    (object ?obj-desig)))
-                                        ;   (setq *desig-saver* ?obj-desig)
+        (cram-occasions-events:on-event
+         (make-instance 'cpoe:object-attached
+           :object-name (desig:desig-prop-value ?obj-desig :name)
+           :arm ?arm))
+
         (print (desig:a location (pose ?place-pose)))
 
         ;; move to obj

@@ -172,31 +172,6 @@
   (prolog:prolog '(and (btr:bullet-world ?world)
                               (btr:simulate ?world 100))))
 
-(defun poses-demo ()
-  (spawn-cereal-at-pose 'cereal-1 (apply-bullet-transform (make-poses "?PoseObjStart")) '(1 1 1))
-  
-  (spawn-cereal-at-pose 'cereal-2 (apply-bullet-transform (make-poses "?PoseObjStart")) '(1 0 0))
-  (spawn-cereal-at-pose 'cereal-3 (apply-bullet-transform (make-poses "?PoseObjEnd")) '(0.6 0 0))
-
-  (spawn-cereal-at-pose 'cereal-4 (apply-bullet-transform (make-poses "?PoseHandStart")) '(0 1 0))
-  (spawn-cereal-at-pose 'cereal-5 (apply-bullet-transform (make-poses "?PoseHandEnd")) '(0 0.6 0))
-
-  (spawn-cereal-at-pose 'cereal-6 (apply-bullet-transform (make-poses "?PoseCameraStart")) '(0 0 1))
-  (spawn-cereal-at-pose 'cereal-7 (apply-bullet-transform (make-poses "?PoseCameraEnd")) '(0 0 0.6))
-  
-  ;; move objects like needed
-  (move-object (cl-tf:make-transform (cl-tf:make-identity-vector) (cl-tf:make-identity-rotation)) 'cereal-1)
-  
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'cereal-2)
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjEnd"))) 'cereal-3)
-
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseHandStart"))) 'cereal-4)
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseHandEnd"))) 'cereal-5)
-
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseCameraStart"))) 'cereal-6)
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseCameraEnd"))) 'cereal-7)
-  )
-
 
 ;; converts the y-value of the "3d-vector" to it's - value
 ;; Careful! If given a pose which is stored in a variable,
