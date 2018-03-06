@@ -62,7 +62,8 @@
   (cram-prolog:<- (orientation-matters ?object-type)
     (member ?object-type (:ba-spoon)))
 
-  (cram-prolog:<- (object-type-grasp :ba-spoon :top))
+  (cram-prolog:<- (object-type-grasp :ba-spoon :human-grasp))
+  ;; (cram-prolog:<- (object-type-grasp :ba-spoon :top))
   ;; (<- (object-type-grasp :spoon :top))
   ;; (<- (object-type-grasp :fork :top))
   ;; (<- (object-type-grasp :knife :top))
@@ -75,8 +76,10 @@
   ;; (<- (object-type-grasp :cup :top))
 
   ;; (<- (object-type-grasp :cereal :top))
-  (cram-prolog:<- (object-type-grasp :ba-muesli :back))
-  (cram-prolog:<- (object-type-grasp :ba-muesli :front))
+
+  (cram-prolog:<- (object-type-grasp :ba-muesli :human-grasp))
+  ;; (cram-prolog:<- (object-type-grasp :ba-muesli :back))
+  ;; (cram-prolog:<- (object-type-grasp :ba-muesli :front))
   ;; (<- (object-type-grasp :breakfast-cereal :top))
   ;; (<- (object-type-grasp :breakfast-cereal :back))
   ;; (<- (object-type-grasp :breakfast-cereal :front))

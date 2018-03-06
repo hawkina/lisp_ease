@@ -19,7 +19,7 @@
     (prolog:<- (location-costmap:costmap-reach-minimal-distance 0.2)))
   ;; set params
   (setf cram-bullet-reasoning-belief-state:*robot-parameter* "robot_description")
-  (setf cram-bullet-reasoning-belief-state:*kitchen-parameter* "kitchen_description")
+  (setf cram-bullet-reasoning-belief-state:*kitchen-parameter* "no_kitchen_description")
 
   (sem-map:get-semantic-map)
 
@@ -52,13 +52,14 @@
                     (assert (btr:joint-state ?world ?robot ?joint-states))
                     (assert (btr:joint-state ?world ?robot (("torso_lift_joint" 0.15d0)))))))
 
- ;spawn kitchen
-  (let ((kitchen-urdf 
-                 (cl-urdf:parse-urdf 
-                  (roslisp:get-param "kitchen_description"))))
-             (prolog:prolog
-              `(and (btr:bullet-world ?world)
-                    (assert (btr:object ?world :semantic-map no-urdf-kitchen ((0 0 0) (0 0 0 1)) ))))))
+ ;; ;spawn kitchen
+ ;;  (let ((kitchen-urdf 
+ ;;                 (cl-urdf:parse-urdf 
+ ;;                  (roslisp:get-param "kitchen_description"))))
+ ;;             (prolog:prolog
+ ;;              `(and (btr:bullet-world ?world)
+ ;;                    (assert (btr:object ?world :semantic-map no-urdf-kitchen ((0 0 0) (0 0 0 1)) )))))
+ )
 
 
 

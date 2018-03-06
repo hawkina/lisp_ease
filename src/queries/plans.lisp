@@ -17,7 +17,7 @@
                             (target (desig:a location (pose ?grasping-look-pose)))))))))
 
 
-(defvar ?desig-saver nil)
+(defvar *desig-saver* nil)
 ;; TODO finish making this universal
 (defun pick-up-obj ()
     (let* ((?obj-desig nil)
@@ -38,19 +38,19 @@
                         (type picking-up)
                         (arm ?arm)
                         (object ?obj-desig)))
-             (setq ?desig-saver ?obj-desig)))))
+             (setq *desig-saver* ?obj-desig)))))
 
 (defun place-muesli (?arm ?place-pose)
-  (let* ()
+  (let* ((?desig-saver *desig-saver*))
     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
       (cpl:top-level
         (print (desig:a location (pose ?place-pose)))
-       (exe:perform
-        (desig:an action
-                  (type placing)
-                  (arm ?arm)
-                  ;; (object ?desig-saver)
-                  (target (desig:a location (pose ?place-pose)))))))))
+        (exe:perform
+         (desig:an action
+                   (type placing)
+                   (arm ?arm)
+                   (object ?desig-saver)
+                   (target (desig:a location (pose ?place-pose)))))))))
 
 ;works
 (defun move-torso-up (?angle)
@@ -60,6 +60,62 @@
               (desig:a motion (type moving-torso) (joint-angle ?angle))))))
 
 
+(defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose )
+  (let* ((?obj-desig nil)
+         (?arm (get-hand)))
+    (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
+      (cpl:top-level
+
+        ;; move the robot to location
+        (exe:perform (desig:an action
+                               (type going)
+                               (target (desig:a location (pose ?grasping-base-pose)))))
+        ;; move the head to look at location
+        (exe:perform (desig:an action
+                               (type looking)
+                               (target (desig:a location (pose ?grasping-look-pose)))))
+        ;; see obj
+        (setf ?obj-desig
+              (exe:perform (desig:an action
+                                     (type detecting)
+                                     (object (desig:an object (type ba-muesli))))))
+        (print  (desig:reference
+                 (desig:an action
+                           (type picking-up)
+                           (arm ?arm)
+                           (object ?obj-desig))))
+        (exe:perform 
+         (desig:an action
+                   (type picking-up)
+                   (arm ?arm)
+                   (object ?obj-desig)))
+                                        ;   (setq *desig-saver* ?obj-desig)
+        (print (desig:a location (pose ?place-pose)))
+
+        ;; move to obj
+        (pp-plans::park-arms)
+        ;; move the robot to location
+        (exe:perform (desig:an action
+                               (type going)
+                               (target (desig:a location (pose ?placing-base-pose)))))
+        ;; move the head to look at location
+          
+          
+        (exe:perform (desig:an action
+                               (type looking)
+                               (target (desig:a location (pose ?placing-look-pose)))))
+        ;; place obj
+          
+        (exe:perform
+         (desig:an action
+                   (type placing)
+                   (arm ?arm)
+                   (object ?obj-desig)
+                   (target (desig:a location (pose ?place-pose)))))))))
+
+
+
+
 
 (defun reachability-tester ()
   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
@@ -67,8 +123,8 @@
       (let ((?pose (cl-transforms-stamped:make-pose-stamped
                     "base_footprint"
                     0.0
-                    (cl-tf:make-3d-vector 0.5102766878660931d0 0.06244204412128673d0 0.8842221563061078d0)
-                    (cl-tf:make-quaternion 0.1263345392921927d0 -0.9919876636802037d0 -2.308838915662856d-5 6.0027490527310316d-6))))
+                    (cl-tf:make-3d-vector 0.058911132840623937d0 -1.0370889278233015d0 1.9478415057647074d0)
+                    (cl-tf:make-quaternion -0.24648661911487577d0 0.6931571215391159d0 -0.6280940920114517d0 0.25352586805820465d0))))
         (exe:perform (desig:an motion
                                (type moving-tcp)
                                (left-target (desig:a location (pose ?pose)))))))))
@@ -195,14 +251,15 @@
 ; DEMO-----------------------------------------------------------------
 
 
-
-(defun planning-demo ()
-  ;; initialization and preparation
+(defun init-reset-sim ()
+    ;; initialization and preparation
   (init-clean-table)
   (init-bullet-world)
   (add-bowl)
   (add-muesli)
-  (get-poses-from-event)
+  (get-poses-from-event))
+
+(defun planning-demo ()
 
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'ba-muesli)
 
