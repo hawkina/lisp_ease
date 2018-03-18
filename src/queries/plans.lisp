@@ -17,7 +17,7 @@
                             (target (desig:a location (pose ?grasping-look-pose)))))))))
 
 
-(defvar *desig-saver* nil)
+
 ;; TODO finish making this universal
 (defun pick-up-obj ()
     (let* ((?obj-desig nil)
@@ -38,19 +38,8 @@
                         (type picking-up)
                         (arm ?arm)
                         (object ?obj-desig)))
-             (setq *desig-saver* ?obj-desig)))))
+             ))))
 
-(defun place-muesli (?arm ?place-pose)
-  (let* ((?desig-saver *desig-saver*))
-    (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-      (cpl:top-level
-        (print (desig:a location (pose ?place-pose)))
-        (exe:perform
-         (desig:an action
-                   (type placing)
-                   (arm ?arm)
-                   (object ?desig-saver)
-                   (target (desig:a location (pose ?place-pose)))))))))
 
 ;works
 (defun move-torso-up (?angle)
@@ -64,9 +53,10 @@
                    (set-grasp-look-pose (make-poses "?PoseObjStart"))
                    (set-grasp-base-pose (make-poses "?PoseCameraEnd"))
                    (set-grasp-look-pose (make-poses "?PoseObjEnd"))
-                   (set-place-pose (make-poses "?PoseObjEnd"))))
+                   (set-place-pose (make-poses "?PoseObjEnd"))
+                   ':ba-muesli))
 
-(defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose) 
+(defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose ?type) 
   (let* ((?obj-desig nil)
          (?arm (get-hand)))
     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
@@ -84,7 +74,7 @@
         (setf ?obj-desig
               (exe:perform (desig:an action
                                      (type detecting)
-                                     (object (desig:an object (type ba-muesli))))))
+                                     (object (desig:an object (type ?type))))))
         (print  (desig:reference
                  (desig:an action
                            (type picking-up)
@@ -116,7 +106,7 @@
                                (type looking)
                                (target (desig:a location (pose ?placing-look-pose)))))
         ;; place obj
-          
+        (cpl:sleep 1.0)  
         (exe:perform
          (desig:an action
                    (type placing)

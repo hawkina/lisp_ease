@@ -4,7 +4,7 @@
 
 ;;(make-poses "?PoseCameraStart")
 ;; move robot away from the original pose by this offset. 
-(defparameter *human-feet-offset* 0.3 )
+(defparameter *human-feet-offset* 0.0 ) ;; was 0.3 for Andreis Data
 
 (defun set-grasp-base-pose (transform)
    ;; make the transform a viable robot position
@@ -68,7 +68,7 @@
   ;; (<- (object-type-grasp :fork :top))
   ;; (<- (object-type-grasp :knife :top))
 
-  (cram-prolog:<- (object-type-grasp :ba-milk :side))
+  (cram-prolog:<- (object-type-grasp :ba-milk :human-grasp))
   (cram-prolog:<- (object-type-grasp :ba-milk :front))
 
   (cram-prolog:<- (object-type-grasp :ba-cup :front))
@@ -77,7 +77,8 @@
 
   ;; (<- (object-type-grasp :cereal :top))
 
-  (cram-prolog:<- (object-type-grasp :ba-muesli :human-grasp))
+  ;; (cram-prolog:<- (object-type-grasp :ba-muesli :human-grasp))
+  (cram-prolog:<- (object-type-grasp :ba-muesli :human-other-grasp))
   ;; (cram-prolog:<- (object-type-grasp :ba-muesli :back))
   ;; (cram-prolog:<- (object-type-grasp :ba-muesli :front))
   ;; (<- (object-type-grasp :breakfast-cereal :top))

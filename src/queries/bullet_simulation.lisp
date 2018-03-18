@@ -74,28 +74,8 @@
 (defun make-bullet-poses (name)
   (make-bullet-pose (cut:var-value (intern name) (get-poses-from-event))))
 
-;spawn cerial box
-;one can clean the entire world with this: (roslisp-utilities:startup-ros)
-(defun spawn-cereal ()
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                   ;spawns the cerial at the given pose and quaternion.
-                   (assert (btr:object ?world :cereal cereal-3  ((0 0 2) (0 0 0 1))
-                                                      :mass 0.2 :color (0 1 1) :size (0.02 0.1 0.1))))))
-
-(defun spawn-cereal-at-pose (name transform color)
-  (let* ((pose (cl-tf:transform->pose transform))) 
-    (prolog:prolog `(and (btr:bullet-world ?world)
-                                        ;spawns the cerial at the given pose and quaternion.
-                         (assert (btr:object ?world :cereal ,name ,pose
-                                             :mass 0.2 :color ,color :size (0.02 0.1 0.1)))))))
-
-(defun move-cereal (px py pz qx qy qz qw)
-  (btr-utils:move-object 'cereal-4
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector px py pz)
-                          (cl-transforms:make-quaternion qx qy qz qw))))
-
 ; spawns x y z axes at the given point. the factor is the offset needed, since otherwise the point would be within the spawned axis object
+
 (defun spawn-axes (x y z factor)
   ;;spawn all 3 axes
   ;; x-Axis
@@ -146,13 +126,6 @@
   (let* ((pose (cl-tf:transform->pose transform)))
     (prolog:prolog `(and (btr:bullet-world ?world)
                          (assert (btr:object-pose ?world ,obj ,pose))))))
-
-(defun test-move-object ()
-  (let ((pose))
-    (progn
-      (setq pose (test-pose-lists-parser))
-      (prolog:prolog `(and (btr:bullet-world ?world)
-                           (assert (btr:object-pose ?world mug-2 ,pose)))))))
 
 ; usecase: (move-object (pose-lists-parser '|?PoseObjEnd|))
 ; moves object to the pose.
@@ -226,6 +199,15 @@
                           (cl-tf:make-3d-vector 0 0 1)
                           pi)) 
    transform))
+
+(defun apply-rotation (transform)
+    (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 0 1)
+                          (/ pi 2))) 
+   transform))
+
 
 (defun move-all-boxes ()
   (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'cereal-2)
