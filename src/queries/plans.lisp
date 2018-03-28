@@ -254,26 +254,32 @@
 
 (defun init-reset-sim ()
     ;; initialization and preparation
-  (init-clean-table)
+  (init-set-clean-table)
   (init-bullet-world)
   (add-bowl)
-  (add-muesli)
-  (get-poses-from-event))
+  (add-muesli))
 
 (defun planning-demo ()
 
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'ba-muesli)
+  (move-object (quaternion-w-flip (make-poses "?PoseObjStart")) 'ba-muesli)
 
   ; move the robot
   (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
   ; pick up obj - muesli atm
-  (pick-up-obj)
+  ; (pick-up-obj )
 
   ; move to placing spot
   (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraEnd")) (set-grasp-look-pose (make-poses "?PoseObjEnd")))
   
   ;place
-  (place-muesli (get-hand)  (set-grasp-look-pose (make-poses "?PoseObjEnd"))))
+  ;; (place-muesli (get-hand)  (set-grasp-look-pose (make-poses "?PoseObjEnd")))
+)
+
+
+(defun alternative-demo ()
+  (move-object  (make-poses "?PoseObjStart") 'ba-muesli)
+  (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
+  )
 
 ;; placing doesnt work in the conventional way. but calling this in the repl works:
 ;; (defun placing-b ()
@@ -287,3 +293,4 @@
 ;;                   (arm :left)
 ;;                   (object ?desig-saver)
 ;;                   (target (desig:a location (pose ?test)))))))))
+

@@ -184,7 +184,23 @@
      (cl-tf:rotation pose))))
 
 ;; closest one so far
-(defun apply-bullet-transform (transform)
+(defun apply-bullet-transform-start (transform)
+  (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector -2.6 -1.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 0 1)
+                          pi)) 
+   transform))
+
+(defun apply-bullet-transform-end (transform)
+  (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector -3.0 -0.5 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 0 1)
+                          pi)) 
+   transform))
+
+(defun apply-bullet-transform-old (transform)
   (cl-tf:transform*
    (cl-tf:make-transform (cl-tf:make-3d-vector -2.7 -1.0 0.0)
                          (cl-tf:axis-angle->quaternion
@@ -208,21 +224,21 @@
                           (/ pi 2))) 
    transform))
 
+(defun apply-rotation-x (transform)
+    (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 1 0 0)
+                          (/ pi 2))) 
+   transform))
 
-(defun move-all-boxes ()
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjStart"))) 'cereal-2)
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseObjEnd"))) 'cereal-3)
-
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseHandStart"))) 'cereal-4)
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseHandEnd"))) 'cereal-5)
-
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseCameraStart"))) 'cereal-6)
-  (move-object (apply-bullet-transform (quaternion-w-flip (make-poses "?PoseCameraEnd"))) 'cereal-7))
 
 ;;(make-poses "?PoseCameraStart")
 (defun move-robot (transform)
   ;; make the transform a viable robot position
-  (let* ((pose (cl-tf:transform->pose  (remove-z (apply-bullet-transform (quaternion-w-flip transform)))))
+  (let* ((pose (cl-tf:transform->pose  (remove-z
+                                        ;; removed apply-bullet-transform from here
+                                        (quaternion-w-flip transform))))
          (quaternion (cl-tf:orientation pose))
          (x nil)
          (y nil))
@@ -287,6 +303,11 @@
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh ba-milk ((0 6 2) (0 0 0 1))
                             :mass 0.2 :color (1 0 0) :mesh :ba-milk)))))
+
+(defun add-axes ()
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh ba-axes ((1 1 1) (0 0 0 1))
+                            :mass 0.2 :color (0 1 1) :mesh :ba-axes)))))
 
 
 ;; just when I want to spawn all of them 

@@ -8,7 +8,7 @@
 
 (defun set-grasp-base-pose (transform)
    ;; make the transform a viable robot position
-  (let* ((pose (cl-tf:transform->pose  (remove-z (apply-bullet-transform (quaternion-w-flip transform)))))
+  (let* ((pose (cl-tf:transform->pose  (remove-z transform)))
          (quaternion (cl-tf:orientation pose))
          (x nil)
          (y nil)
@@ -31,6 +31,7 @@
                  0)
                 quaternion))))
 
+
 ;;(make-poses "?PoseObjStart")
 (defun set-grasp-look-pose (transform)
   (let* ((?grasp-look-pose nil))
@@ -38,8 +39,9 @@
           (cl-transforms-stamped:make-pose-stamped
            "map"
            0.0
-           (cl-tf:origin (cl-tf:transform->pose (apply-bullet-transform transform)))
-           (cl-tf:orientation (cl-tf:transform->pose (apply-bullet-transform transform)))))))
+           (cl-tf:origin (cl-tf:transform->pose transform))
+           (cl-tf:orientation (cl-tf:transform->pose transform))))))
+
 
 ;;(make-poses "?PoseObjEnd")
 (defun set-place-pose (transform)
@@ -48,7 +50,7 @@
           (cl-transforms-stamped:make-pose-stamped
            "map"
            0.0
-           (cl-tf:origin (cl-tf:transform->pose (apply-bullet-transform transform)))
+           (cl-tf:origin (cl-tf:transform->pose transform))
            (cl-tf:make-identity-rotation)))))
 
 
@@ -71,7 +73,7 @@
   (cram-prolog:<- (object-type-grasp :ba-milk :human-grasp))
   (cram-prolog:<- (object-type-grasp :ba-milk :front))
 
-  (cram-prolog:<- (object-type-grasp :ba-cup :front))
+  (cram-prolog:<- (object-type-grasp :ba-cup :human-grasp))
   ;; (<- (object-type-grasp :cup :side))
   ;; (<- (object-type-grasp :cup :top))
 
@@ -85,7 +87,7 @@
   ;; (<- (object-type-grasp :breakfast-cereal :back))
   ;; (<- (object-type-grasp :breakfast-cereal :front))
 
-  (cram-prolog:<- (object-type-grasp :ba-bowl :top)))
+  (cram-prolog:<- (object-type-grasp :ba-bowl :human-grasp)))
 
 (cram-prolog:def-fact-group pick-and-place-plans (desig:action-grounding)
   (cram-prolog:<- (desig:action-grounding ?action-designator (pick-up ?current-object-desig ?arm

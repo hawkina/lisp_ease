@@ -1,6 +1,7 @@
 (in-package :le)
 
 (defvar poses-list nil)
+(defvar orig-poses-list nil)
 
 (defun map-marker-init ()
   (prolog-simple "sem_map_inst(MapInst),!,marker_update(object(MapInst))." ))
@@ -21,18 +22,14 @@
   (connect-to-db "Virtual-Games_table-set")
   (map-marker-init))
 
-(defun get-event ()
-  (u-occurs "EpInst" "EventInst" "Start" "End"))
-
-(defun get-event-by-type (type)
-  (cut:lazy-append
-   (event-type "EventInst" (concatenate 'string "knowrob:'" type "'"))
-   (event-type "EventInst" (concatenate 'string "knowrob_u:'" type "'"))))
-
-(defun get-all-events (&optional (type NIL))
-  (if type
-      (cut:force-ll (get-event-by-type type))
-      (cut:force-ll (get-event))))
+;; care to give the right rcg stamp
+(defun init-set-clean-table ()
+  (start-ros-node "lisp_ease")
+  (register-ros-package "knowrob_robcog")
+  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_d/Episodes//")
+  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_d/SemanticMap.owl")
+  (connect-to-db "Own-Episodes_set-clean-table")  
+  (map-marker-init))
 
 ;parses the output from knowrob to a proper string which prolog can use
 (defun parse-str (str)
@@ -69,19 +66,81 @@
       (setq obj-short (parse-str (cut:var-value '|?ObjShortName| (car (iri-xml-namespace obj-acted-on-inst  "ObjShortName")))))
       (setq camera-inst (parse-str (cut:var-value '|?CameraInst| (car (obj-type "CameraInst" "knowrob:'CharacterCamera'")))))
       (setq camera-short (parse-str (cut:var-value '|?CameraShortName| (car (iri-xml-namespace camera-inst "CameraShortName")))))
+      
       (push (caar (actor-pose episode-instance hand-inst-short start "PoseHandStart")) poses-list)
       (push (caar (actor-pose episode-instance hand-inst-short end "PoseHandEnd")) poses-list)
       (push (caar (actor-pose episode-instance camera-short start "PoseCameraStart")) poses-list)
       (push (caar (actor-pose episode-instance camera-short end "PoseCameraEnd")) poses-list)
       (push (caar (actor-pose episode-instance obj-short start "PoseObjStart")) poses-list)
       (push (caar (actor-pose episode-instance obj-short end "PoseObjEnd")) poses-list)
-      (push (list '|?HandInstShortName| hand-inst-short) poses-list))))
+      (push (list '|?HandInstShortName| hand-inst-short) poses-list)
+      (push (list '|?ObjInstShortName| obj-short) poses-list))))
+
+;;---
+
+(defun get-grasp-something-poses ()
+
+  (setq orig-poses-list (prolog-simple "ep_inst(EpInst),
+    u_occurs(EpInst, EventInst, Start, End),
+    event_type(EventInst, knowrob:'GraspingSomething'),
+    rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
+    performed_by(EventInst, HandInst),
+    iri_xml_namespace(HandInst,_, HandInstShortName),
+    obj_type(HandInst, HandType),
+
+    iri_xml_namespace(HandType, _, HandTypeName),
+    iri_xml_namespace(ObjActedOnInst, _, ObjShortName),
+
+    obj_type(CameraInst, knowrob:'CharacterCamera'),
+    iri_xml_namespace(CameraInst, _, CameraShortName),
+
+    actor_pose(EpInst, ObjShortName, Start, PoseObjStart),
+    actor_pose(EpInst, ObjShortName, End, PoseObjEnd),
+
+    actor_pose(EpInst, CameraShortName, Start, PoseCameraStart),
+    actor_pose(EpInst, CameraShortName, End, PoseCameraEnd),
+
+    actor_pose(EpInst, HandInstShortName, Start, PoseHandStart),
+    actor_pose(EpInst, HandInstShortName, End, PoseHandEnd)."))
+
+  (setq poses-list (cut:lazy-car orig-poses-list)))
 
 
+(defun alternative-get-grasp-something-poses ()
+
+  (setq orig-poses-list (prolog-simple "ep_inst(EpInst),
+    u_occurs(EpInst, EventInst, Start, End),
+    event_type(EventInst, knowrob:'GraspingSomething'),
+    rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
+    performed_by(EventInst, HandInst),
+    iri_xml_namespace(HandInst,_, HandInstShortName),
+    obj_type(HandInst, HandType),
+
+    iri_xml_namespace(HandType, _, HandTypeName),
+    iri_xml_namespace(ObjActedOnInst, _, ObjShortName),
+
+    obj_type(CameraInst, knowrob:'CharacterCamera'),
+    iri_xml_namespace(CameraInst, _, CameraShortName),
+
+    object_pose_at_time(ObjActedOnInst, Start, PoseObjStart),
+    object_pose_at_time(ObjActedOnInst, End, PoseObjEnd),
+
+    object_pose_at_time(CameraInst, Start, PoseCameraStart),
+    object_pose_at_time(CameraInst, End, PoseCameraEnd),
+
+    object_pose_at_time(HandInst, Start, PoseHandStart),
+    object_pose_at_time(HandInst, End, PoseHandEnd)."))
+
+  (setq poses-list (cut:lazy-car orig-poses-list)))
 
 
-
-
+;; count is the number of the event we want to get poses from
+(defun get-next-obj-poses (count)
+  (if (setq poses-list  (cut:lazy-elt orig-poses-list count))
+      (progn
+        (format t "Poses from event nr. ~D ." count)
+        poses-list)
+      (format t "No poses for event nr. ~D available. There are no more events for this query. Query result was NIL. " count)))
 
 ;; there must be a prettier way of doing this...?
 ;; gets a list of 7 values as a parameter and makes a cl-transform out of it.
@@ -94,18 +153,30 @@
 ;; Note: the name has to be as the event-get-all-values function knows it
 ;; example: "?PoseHandStart"
 (defun make-poses (name)
-  (make-pose (cut:var-value (intern name) poses-list)))
+  (quaternion-w-flip (make-pose (cut:var-value (intern name) poses-list))))
 
-;; for getting infos out of the event data which are not poses
-;; ?var is the variable name we want to get infos about
-(defun get-info (?var)
-  (cut:var-value (intern ?var) poses-list))
+;; --------------------------------
+;; alternative function for the time being.
+;;--------------------------------
+(defun alternative-make-poses (name)
+  (quaternion-w-flip (alternative-make-pose (cut:lazy-cdr (cut:var-value (intern name) poses-list)))))
+
+(defun alternative-make-pose (pose)
+  (cl-tf:make-transform
+   (apply #'cl-tf:make-3d-vector (first pose))
+   (apply #'cl-tf:make-quaternion (second pose))))
+
+;;----------------------------------
+
+(defun get-info (infoObj)
+  (cut:var-value (intern infoObj)  poses-list))
+
 
 ;; returns the hand used in the curretnly loaded episode
 (defun get-hand ()
-  (if (search "Left" (car (get-info "?HandInstShortName")))
+  (if (search "Left" (string (get-info "?HandInstShortName")))
       :left
-      (if (search "Right" (car (get-info "?HandInstShortName")))
+      (if (search "Right" (string (get-info "?HandInstShortName")))
           :right
           NIL)))
 
@@ -125,13 +196,3 @@
       (setq temp (cut:var-value obj poses-list))
       (list (subseq temp 0 3)
             (subseq temp 3 7)))))
-
-
-;----------------------------
-(defun init-test ()
-  (start-ros-node "lisp_ease")
-  (register-ros-package "knowrob_robcog")
-  (u-load-episodes "/media/hasu/Exte/episodes/Virtual-Games/own-setup/rcg_0/Episodes/")
-  (owl-parse "/media/hasu/Exte/episodes/Virtual-Games/own-setup/rcg_0/SemanticMap.owl")
-  (connect-to-db "Virtual-Games_own-setup")
-  (map-marker-init))
