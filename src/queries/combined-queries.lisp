@@ -26,55 +26,14 @@
 (defun init-set-clean-table ()
   (start-ros-node "lisp_ease")
   (register-ros-package "knowrob_robcog")
-  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_d/Episodes//")
-  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_d/SemanticMap.owl")
+  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_a/Episodes//")
+  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_a/SemanticMap.owl")
   (connect-to-db "Own-Episodes_set-clean-table")  
   (map-marker-init))
 
 ;parses the output from knowrob to a proper string which prolog can use
 (defun parse-str (str)
   (concatenate 'string "'"  (remove #\' (string str)) "'"))
-
-
-(defun get-poses-from-event ()
-  (let* ((episode-instance)
-        (event-inst)
-        (hand-inst)
-        (hand-type)
-        (obj-acted-on-inst)
-        (hand-inst-short)
-        (start)
-        (end)
-        (temp-list)
-       ; (poses-list)
-        (camera-inst)
-        (camera-short)
-        (obj-short))
-    (progn
-      ;;clean poses list before unexpected stuff happenes. 
-      (setq poses-list nil)
-      (setq episode-instance (parse-str (ep-inst "EpInst")))
-      (setq event-inst (parse-str (cut:var-value '|?EventInst| (car (event-type "EventInst" "knowrob:'GraspingSomething'")))))
-      (setq temp-list (u-occurs episode-instance event-inst "Start" "End"))
-      (setq start (parse-str (cut:var-value '|?Start| (car temp-list))))
-      (setq end (parse-str (cut:var-value '|?End| (car temp-list))))
-      (setq obj-acted-on-inst (parse-str (cut:var-value '|?ObjActedOnInst| (car (rdf-has event-inst "knowrob:'objectActedOn'" "ObjActedOnInst")))))
-      (setq hand-inst (parse-str (cut:var-value '|?HandInst| (car (performed-by event-inst "HandInst")))))
-      (setq hand-inst-short (parse-str (cut:var-value '|?HandInstShortName| (car (iri-xml-namespace hand-inst  "HandInstShortName")))))
-      (setq hand-type (parse-str (cut:var-value '|?HandType| (car (obj-type "HandInst" "HandType")))))
-      (iri-xml-namespace hand-type "HandTypeName")
-      (setq obj-short (parse-str (cut:var-value '|?ObjShortName| (car (iri-xml-namespace obj-acted-on-inst  "ObjShortName")))))
-      (setq camera-inst (parse-str (cut:var-value '|?CameraInst| (car (obj-type "CameraInst" "knowrob:'CharacterCamera'")))))
-      (setq camera-short (parse-str (cut:var-value '|?CameraShortName| (car (iri-xml-namespace camera-inst "CameraShortName")))))
-      
-      (push (caar (actor-pose episode-instance hand-inst-short start "PoseHandStart")) poses-list)
-      (push (caar (actor-pose episode-instance hand-inst-short end "PoseHandEnd")) poses-list)
-      (push (caar (actor-pose episode-instance camera-short start "PoseCameraStart")) poses-list)
-      (push (caar (actor-pose episode-instance camera-short end "PoseCameraEnd")) poses-list)
-      (push (caar (actor-pose episode-instance obj-short start "PoseObjStart")) poses-list)
-      (push (caar (actor-pose episode-instance obj-short end "PoseObjEnd")) poses-list)
-      (push (list '|?HandInstShortName| hand-inst-short) poses-list)
-      (push (list '|?ObjInstShortName| obj-short) poses-list))))
 
 ;;---
 

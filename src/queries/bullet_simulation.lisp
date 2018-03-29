@@ -74,54 +74,6 @@
 (defun make-bullet-poses (name)
   (make-bullet-pose (cut:var-value (intern name) (get-poses-from-event))))
 
-; spawns x y z axes at the given point. the factor is the offset needed, since otherwise the point would be within the spawned axis object
-
-(defun spawn-axes (x y z factor)
-  ;;spawn all 3 axes
-  ;; x-Axis
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :cereal x-axis  ((0 0 2) (0 0 0 1))
-                                                      :mass 0.0 :color (1 0 0) :size (0.2 0.02 0.02)))))
-  ;; y-Axis
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :cereal y-axis  ((0 0 2) (0 0 0 1))
-                                                      :mass 0.0 :color (0 1 0) :size (0.02 0.2 0.02)))))
-  ;; z-Axis
-   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :cereal z-axis  ((0 0 2) (0 0 0 1))
-                                                      :mass 0.0 :color (0 0 1) :size (0.02 0.02 0.2)))))
-
-  ;; position all 3 axes,
-  (btr-utils:move-object 'x-axis
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector (+ x factor) y z)
-                          (cl-transforms:make-identity-rotation)))
-  (btr-utils:move-object 'y-axis
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector x (+ y factor) z)
-                          (cl-transforms:make-identity-rotation)))
-  (btr-utils:move-object 'z-axis
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector x y (+ z factor))
-                          (cl-transforms:make-identity-rotation)))
-  
-  )
-
-(defun place-rotate-axes (px py pz pfactor qx qy qz qw)
-  (btr-utils:move-object 'x-axis
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector (+ px pfactor) py pz)
-                          (cl-transforms:make-quaternion qx qy qz qw)))
-  (btr-utils:move-object 'y-axis
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector px (+ py pfactor) pz)
-                          (cl-transforms:make-quaternion qx qy qz qw)))
-  (btr-utils:move-object 'z-axis
-                         (cl-transforms:make-pose
-                          (cl-transforms:make-3d-vector px py (+ pz pfactor))
-                          (cl-transforms:make-quaternion qx qy qz qw))))
-
-
 (defun move-object (transform obj)
   (let* ((pose (cl-tf:transform->pose transform)))
     (prolog:prolog `(and (btr:bullet-world ?world)
@@ -146,28 +98,15 @@
                               (btr:simulate ?world 100))))
 
 
-;; converts the y-value of the "3d-vector" to it's - value
-;; Careful! If given a pose which is stored in a variable,
-;; the variable will be overwritten
-(defun swap-bullet-y-axis (pose)
-  (let* ((vector (first pose)))
-    (setf (second vector)
-          (- (second vector)))
-    (list vector
-          (second pose))))
-
-;; for proper transforms
-(defun swap-y-axis (pose)
-  (let* ((vector (cl-tf:translation pose)))
-    (cl-tf:make-transform
-     (cl-tf:make-3d-vector (cl-tf:x vector) (- (cl-tf:y vector)) (cl-tf:z vector))
-     (cl-tf:rotation pose))))
-
-(defun swap-x-axis (pose)
-  (let* ((vector (cl-tf:translation pose)))
-    (cl-tf:make-transform
-     (cl-tf:make-3d-vector (-  (cl-tf:x vector)) (cl-tf:y vector) (cl-tf:z vector))
-     (cl-tf:rotation pose))))
+;; flip y axes and y of quaternion
+(defun flip-left-to-right-handedness (transform)
+  (cl-tf:make-transform
+   (cl-tf:translation transform)
+   (cl-tf:make-quaternion
+    (cl-tf:x (cl-tf:rotation transform))
+    (- (cl-tf:y (cl-tf:rotation transform)))
+    (cl-tf:z (cl-tf:rotation transform))
+    (cl-tf:w (cl-tf:rotation transform)))))
 
 (defun quaternion-w-flip (pose)
   (let* ((quaternion (cl-tf:rotation pose)))
@@ -232,6 +171,30 @@
                           (/ pi 2))) 
    transform))
 
+(defun apply-rotation-tx (transform)
+    (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 1 0 0)
+                          -1.5)) 
+   transform))
+
+(defun apply-rotation-ty (transform)
+    (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 1 0)
+                          -0.5))
+    transform))
+
+(defun apply-rotation-tz (transform)
+    (cl-tf:transform*
+   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
+                         (cl-tf:axis-angle->quaternion
+                          (cl-tf:make-3d-vector 0 0 1)
+                          1.0))
+    transform))
+
 
 ;;(make-poses "?PoseCameraStart")
 (defun move-robot (transform)
@@ -259,21 +222,6 @@
   (prolog:prolog `(and (btr:bullet-world ?world)
                        (cram-robot-interfaces:robot ?robot )
                        (btr:head-pointing-at ?world ?robot ,pose))))
-;;deprecated
-(defun move-head2 (pose)
-  (prolog:prolog `(and (btr:bullet-world ?world)
-                       (assert (btr:calculate-pan-tilt cram-pr2-description:pr2 ?head_pan_link ?head_tilt_link ,pose)))))
-
-;; this one is the only one that works so far?
-;; head keeps moving though?
-(defun move-head-test (pose)
-(let* ((bullet-pose (remove-z (apply-bullet-transform (quaternion-w-flip pose)))))
-  (cram-pr2-projection::look-at-pose-stamped
-   (cl-tf:make-pose-stamped
-    "map"
-    0.0
-    (cl-tf:translation bullet-pose)
-    (cl-tf:rotation bullet-pose)))))
 
 ;;if in back 'cereal-5
 (defun is-in-view (name-of-object)
@@ -317,3 +265,30 @@
   (add-muesli)
   (add-spoon)
   (add-milk))
+
+
+(defun set-axes ()
+  (let* ((transf_r)
+         (transf_l))
+    (setq transf_r (car
+                  (cram-projection::projection-environment-result-result
+                   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
+                     (cram-tf::lookup-transform cram-tf::*transformer* "map" "r_gripper_r_finger_tip_link" )))))
+    (setq transf_l (car
+                  (cram-projection::projection-environment-result-result
+                   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
+                     (cram-tf::lookup-transform cram-tf::*transformer* "map" "l_gripper_l_finger_tip_link" )))))
+    
+    (setq transf_r
+          (cl-tf:make-transform
+           (cl-tf:translation transf_r)
+           (cl-tf:rotation transf_r)))
+    (move-object transf_r 'ba-axes)
+   (setq transf_l
+          (cl-tf:make-transform
+           (cl-tf:translation transf_l)
+           (cl-tf:rotation transf_l)))
+    
+    (move-object transf_r 'ba-axes)
+    (move-object transf_l 'ba-axes2)
+    (move-object (flip-left-to-right-handedness (make-poses "?PoseHandStart")) 'ba-axes3)))

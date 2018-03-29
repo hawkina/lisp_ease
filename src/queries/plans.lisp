@@ -257,7 +257,17 @@
   (init-set-clean-table)
   (init-bullet-world)
   (add-bowl)
-  (add-muesli))
+  (add-muesli)
+  (add-axes)
+
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh ba-axes3 ((1 1 1) (0 0 0 1))
+                            :mass 0.2 :color (1 0 0) :mesh :ba-axes))))
+
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh ba-axes2 ((1 1 1) (0 0 0 1))
+                            :mass 0.2 :color (0 1 0) :mesh :ba-axes))))
+  )
 
 (defun planning-demo ()
 
@@ -277,7 +287,7 @@
 
 
 (defun alternative-demo ()
-  (move-object  (make-poses "?PoseObjStart") 'ba-muesli)
+  (move-object  (make-poses "?PoseObjStart") 'ba-milk)
   (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
   )
 

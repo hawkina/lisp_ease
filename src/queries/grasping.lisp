@@ -5,14 +5,19 @@
 ;; grasping offsets -------------------------------------------------------------
 
 (defparameter *transf-l-wrist-l-fingertip* (cl-tf:make-transform
-                                           (cl-tf:make-3d-vector 0.16827996833489822d0 0.014949973681403161d0 -2.010673427754739d-8)
-                                           (cl-tf:make-quaternion 5.551115123125783d-17 5.551115123125783d-17 0.0d0 1.0000000000000002d0)))
+                                           (cl-tf:make-3d-vector 0.1682798952078861d0 -0.014949924408321102d0 -5.0341559587607776d-8)
+                                           (cl-tf:make-quaternion 2.1756605269544066d-9 3.0516662751466084d-9 2.090548603499165d-8 1.0000000568242253d0)))
+
+(defparameter *transf-r-wrist-r-fingertip* (cl-tf:make-transform
+                                           (cl-tf:make-3d-vector 0.16828007259273492d0 -0.01494986734254189d0 -8.564458031656841d-8)
+                                           (cl-tf:make-quaternion 9.429342822178666d-9 1.3159558727871695d-8 -5.643622444373442d-9 1.0000000507707048d0)))
+
 
 (defparameter *lift-z-offset* 0.15 "in meters")
 
-(defparameter *muesli-grasp-z-offset* 0.0 "in meters") ; 0.13
-(defparameter *muesli-grasp-xy-offset* 0.0 "in meters") ; -0.03
-(defparameter *muesli-pregrasp-xy-offset* 0.0 "in meters")  ; 0.15
+(defparameter *muesli-grasp-z-offset* 0.13 "in meters") ; 0.13
+(defparameter *muesli-grasp-xy-offset* -0.03 "in meters") ; -0.03
+(defparameter *muesli-pregrasp-xy-offset* 0.15 "in meters")  ; 0.15
 
 (defparameter *milk-grasp-xy-offset* -0.20 "in meters")
 (defparameter *milk-grasp-z-offset* 0.0 "in meters")
@@ -88,12 +93,19 @@
   (let* ((*transf* nil)
          (*end-transf*))
     ;; transf. from Map to Obj?
-    (setq *transf*  (cl-tf:transform*
-                     (cl-tf:transform*
-                      (cl-tf:transform-inv
-                       (make-poses "?PoseHandStart"))
-                      (make-poses "?PoseObjStart"))
-                     *transf-l-wrist-l-fingertip*))
+    (setq *transf*  (apply-rotation-tx
+                     (apply-rotation-tz
+                      (apply-rotation-ty
+                       ;; (cl-tf:transform*
+                        (flip-left-to-right-handedness
+                         ;; (cl-tf:transform-inv
+                          (cl-tf:transform*
+                           (cl-tf:transform-inv
+                            (make-poses "?PoseHandStart"))
+                           (make-poses "?PoseObjStart")))
+                        ;; )
+                         ;; *transf-r-wrist-r-fingertip*)
+                       ))))
                      
     (setq *end-transf* (cl-transforms-stamped:make-transform-stamped
                         (roslisp-utilities:rosify-underscores-lisp-name object-name)
@@ -319,3 +331,8 @@
 
 (defparameter *transf-map-to-l-finger* (cl-tf:make-transform (cl-tf:make-3d-vector 0.5622712211176504d0 1.3717984540877128d0 1.06599915822347d0)
                                                         (cl-tf:make-quaternion 0.023091277107596397d0 -0.04308567941188812d0 0.06526759266853334d0 0.9966697096824646d0)))
+
+
+;; (move-object
+;;  (cl-tf:make-transform (cl-tf:make-3d-vector -2.2243568525483415d0 -1.7758231926258587d0 1.06599915822347d0 ) (cl-tf:make-quaternion 3.4174963366240263d-4 -0.048882156610488885d0 -0.4069080650806427d0 0.9121602177619935d0))
+;;  'ba-axes)
