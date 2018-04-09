@@ -26,8 +26,8 @@
 (defun init-set-clean-table ()
   (start-ros-node "lisp_ease")
   (register-ros-package "knowrob_robcog")
-  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_a/Episodes//")
-  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_a/SemanticMap.owl")
+  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/Episodes//")
+  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/SemanticMap.owl")
   (connect-to-db "Own-Episodes_set-clean-table")  
   (map-marker-init))
 
@@ -114,44 +114,7 @@
 (defun make-poses (name)
   (quaternion-w-flip (make-pose (cut:var-value (intern name) poses-list))))
 
-;; --------------------------------
-;; alternative function for the time being.
-;;--------------------------------
-(defun alternative-make-poses (name)
-  (quaternion-w-flip (alternative-make-pose (cut:lazy-cdr (cut:var-value (intern name) poses-list)))))
-
-(defun alternative-make-pose (pose)
-  (cl-tf:make-transform
-   (apply #'cl-tf:make-3d-vector (first pose))
-   (apply #'cl-tf:make-quaternion (second pose))))
-
-;;----------------------------------
-
-(defun get-info (infoObj)
-  (cut:var-value (intern infoObj)  poses-list))
 
 
-;; returns the hand used in the curretnly loaded episode
-(defun get-hand ()
-  (if (search "Left" (string (get-info "?HandInstShortName")))
-      :left
-      (if (search "Right" (string (get-info "?HandInstShortName")))
-          :right
-          NIL)))
 
 
-;splits the list of the pose into pose and quaternion
-;for specific usecase test function
-(defun test-pose-lists-parser ()
-  (let ((temp))
-    (progn
-      (setq temp (cut:var-value '|?PoseCameraStart| poses-list))
-      (list (subseq temp 0 3)
-            '(0 0 1 0)))))
-
-(defun pose-lists-parser (obj)
- (let ((temp))
-    (progn
-      (setq temp (cut:var-value obj poses-list))
-      (list (subseq temp 0 3)
-            (subseq temp 3 7)))))

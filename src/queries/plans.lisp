@@ -17,8 +17,8 @@
                             (target (desig:a location (pose ?grasping-look-pose)))))))))
 
 
-
-;; TODO finish making this universal
+;; ---------------------------------------------------------------------------------------
+;; TODO finish making this universal ------------------------------------------------------
 (defun pick-up-obj ()
     (let* ((?obj-desig nil)
            (?arm (get-hand)))
@@ -259,14 +259,17 @@
   (add-bowl)
   (add-muesli)
   (add-axes)
-
+  ;;axes 3
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh ba-axes3 ((1 1 1) (0 0 0 1))
                             :mass 0.2 :color (1 0 0) :mesh :ba-axes))))
-
+  ;; axes 2 
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh ba-axes2 ((1 1 1) (0 0 0 1))
                             :mass 0.2 :color (0 1 0) :mesh :ba-axes))))
+  (add-cup)
+  (add-spoon)
+  (add-milk)
   )
 
 (defun planning-demo ()
@@ -286,8 +289,8 @@
 )
 
 
-(defun alternative-demo ()
-  (move-object  (make-poses "?PoseObjStart") 'ba-milk)
+(defun alternative-demo (object)
+  (move-object  (make-poses "?PoseObjStart") object)
   (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
   )
 

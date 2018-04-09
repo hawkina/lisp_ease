@@ -70,8 +70,7 @@
   ;; (<- (object-type-grasp :fork :top))
   ;; (<- (object-type-grasp :knife :top))
 
-  (cram-prolog:<- (object-type-grasp :ba-milk :human-grasp))
-  (cram-prolog:<- (object-type-grasp :ba-milk :front))
+  (cram-prolog:<- (object-type-grasp :ba-milk :human-other-grasp))
 
   (cram-prolog:<- (object-type-grasp :ba-cup :human-grasp))
   ;; (<- (object-type-grasp :cup :side))

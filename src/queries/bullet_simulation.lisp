@@ -4,7 +4,7 @@
   ;; append own meshes to meshes list so that they can be loaded.
   (append-meshes-to-list)
   
-  ;; init tf early. Otherwise there will be excaptions.
+  ;; init tf early. Otherwise there will be exceptions.
   (cram-tf::init-tf)
   
   ;;set costmap parameters
@@ -39,7 +39,7 @@
  
   ;(prolog:prolog '(btr:bullet-world ?world))
   (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:debug-window ?world)))
+                   (btr:debug-window ?world)))
   ;load robot description
   (let ((robot-urdf
                    (cl-urdf:parse-urdf
@@ -108,6 +108,7 @@
     (cl-tf:z (cl-tf:rotation transform))
     (cl-tf:w (cl-tf:rotation transform)))))
 
+
 (defun quaternion-w-flip (pose)
   (let* ((quaternion (cl-tf:rotation pose)))
     (cl-tf:make-transform
@@ -163,37 +164,41 @@
                           (/ pi 2))) 
    transform))
 
-(defun apply-rotation-x (transform)
-    (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 1 0 0)
-                          (/ pi 2))) 
-   transform))
+(defun human-to-right-robot-hand-transform ()
+  (let ((alpha  (/ pi 4)))
+      (cl-tf:make-transform
+       (cl-tf:make-3d-vector 0.0 -0.05 0.15)
+       (cl-tf:matrix->quaternion 
+        (make-array '(3 3)
+                    :initial-contents
+                    `((0                1 0)
+                      (,(- (cos alpha)) 0 ,(- (sin alpha)))
+                      (,(- (sin alpha)) 0 ,(cos alpha))))))))
 
-(defun apply-rotation-tx (transform)
-    (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 1 0 0)
-                          -1.5)) 
-   transform))
+(defun human-to-left-robot-hand-transform ()
+  (let ((alpha  (/ pi 4)))
+      (cl-tf:make-transform
+       (cl-tf:make-3d-vector 0.0 -0.05 0.1)
+       (cl-tf:matrix->quaternion 
+        (make-array '(3 3)
+                    :initial-contents
+                    `((0                1 0)
+                      (,(- (cos alpha)) 0 ,(- (sin alpha)))
+                      (,(- (sin alpha)) 0 ,(cos alpha))))))))
 
-(defun apply-rotation-ty (transform)
-    (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 1 0)
-                          -0.5))
-    transform))
 
-(defun apply-rotation-tz (transform)
-    (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          1.0))
-    transform))
+
+
+;; (defun human-to-right-robot-hand-transform ()
+;;   (let ((alpha 0.0 ))  ;(/ pi -5)
+;;       (cl-tf:make-transform
+;;        (cl-tf:make-3d-vector 0.0  0.0 0.0)
+;;        (cl-tf:matrix->quaternion 
+;;         (make-array '(3 3)
+;;                     :initial-contents
+;;                     `((,(+ (sin alpha))  ,(+ (cos alpha))  0 )
+;;                       (0                  0               1 )
+;;                       (,(+ (cos alpha))  ,(- (sin alpha))  0 )))))))
 
 
 ;;(make-poses "?PoseCameraStart")
@@ -291,4 +296,4 @@
     
     (move-object transf_r 'ba-axes)
     (move-object transf_l 'ba-axes2)
-    (move-object (flip-left-to-right-handedness (make-poses "?PoseHandStart")) 'ba-axes3)))
+    (move-object (make-poses "?PoseHandStart") 'ba-axes3)))
