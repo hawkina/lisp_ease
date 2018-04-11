@@ -23,8 +23,8 @@
 
 (defun make-transform-hand-std-pr2 ()
   (cl-tf:transform* (make-poses "?PoseHandStart")
-                      (human-to-right-robot-hand-transform)
-                      cram-pr2-description::*standard-to-pr2-gripper-transform*))
+                    (human-to-right-robot-hand-transform)
+                    cram-pr2-description::*standard-to-pr2-gripper-transform*))
 
 (defun get-robot-in-map-pose () 
   (cl-tf:transform->transform-stamped "map" "base_footprint" 0.0
@@ -41,10 +41,27 @@
                                  (cl-tf:make-quaternion -0.08704018159324084d0 -0.0678501392353959d0 -0.912502320545953d0 -0.3939033077712149d0)))
   )
 
+(defun make-transf-manually ()
+  ;; inverse of map to object, therefore object to map
+  ;; object T map
+  (cram-tf:transform-stamped-inv  (cl-tf:transform->stamped-transform "map" "ba_muesli"  0.0 (make-poses "?PoseObjStart")))
+
+  ;; map T unreal hand
+  (cl-tf:transform->transform-stamped "map" "hand" 0.0 (make-poses "?PoseHandStart"))
+
+  ;; unreal hand T standard gripper
+  (human-to-right-robot-hand-transform)
+  )
+
+
+
+
+
+
 ;; look up transfrom from tf. ex: "l_wrist_roll_link" "l_gripper_l_finger_tip_link" 
 (defun lookup-tf-transform (parent_frame child_frame)
   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
-       (cram-tf::lookup-transform cram-tf::*transformer* parent_frame child_frame)))
+    (cram-tf::lookup-transform cram-tf::*transformer* parent_frame child_frame)))
 ;;------------------------------------------------------------------------------------------
 ;; plans
 
@@ -97,7 +114,7 @@
    transform))
 
 (defun apply-bullet-rotation (transform)
-    (cl-tf:transform*
+  (cl-tf:transform*
    (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
                          (cl-tf:axis-angle->quaternion
                           (cl-tf:make-3d-vector 0 0 1)
@@ -105,7 +122,7 @@
    transform))
 
 (defun apply-rotation (transform)
-    (cl-tf:transform*
+  (cl-tf:transform*
    (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
                          (cl-tf:axis-angle->quaternion
                           (cl-tf:make-3d-vector 0 0 1)
@@ -131,12 +148,12 @@
 (defun start-sim ()
   "simulates the world for a second."
   (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:simulate ?world 10))))
+                   (btr:simulate ?world 10))))
 
 (defun check-stability-of-sim ()
   "checks if the simulation is stable, or if run for a longer time, some objects would change their position. If the result is anything but NIL, the world is stable."
   (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:simulate ?world 100))))
+                   (btr:simulate ?world 100))))
 
 ;; just when I want to spawn all of them 
 (defun spawn-all-own-obj ()
@@ -150,20 +167,20 @@
   (let* ((transf_r)
          (transf_l))
     (setq transf_r (car
-                  (cram-projection::projection-environment-result-result
-                   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
-                     (cram-tf::lookup-transform cram-tf::*transformer* "map" "r_gripper_r_finger_tip_link" )))))
+                    (cram-projection::projection-environment-result-result
+                     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
+                       (cram-tf::lookup-transform cram-tf::*transformer* "map" "r_gripper_r_finger_tip_link" )))))
     (setq transf_l (car
-                  (cram-projection::projection-environment-result-result
-                   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
-                     (cram-tf::lookup-transform cram-tf::*transformer* "map" "l_gripper_l_finger_tip_link" )))))
+                    (cram-projection::projection-environment-result-result
+                     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
+                       (cram-tf::lookup-transform cram-tf::*transformer* "map" "l_gripper_l_finger_tip_link" )))))
     
     (setq transf_r
           (cl-tf:make-transform
            (cl-tf:translation transf_r)
            (cl-tf:rotation transf_r)))
     (move-object transf_r 'ba-axes)
-   (setq transf_l
+    (setq transf_l
           (cl-tf:make-transform
            (cl-tf:translation transf_l)
            (cl-tf:rotation transf_l)))
@@ -172,8 +189,8 @@
     (move-object transf_l 'ba-axes2)
     (move-object (make-poses "?PoseHandStart") 'ba-axes3)))
 
-;splits the list of the pose into pose and quaternion
-;for specific usecase test function
+                                        ;splits the list of the pose into pose and quaternion
+                                        ;for specific usecase test function
 (defun test-pose-lists-parser ()
   (let ((temp))
     (progn
@@ -184,7 +201,7 @@
 
 
 (defun pose-lists-parser (obj)
- (let ((temp))
+  (let ((temp))
     (progn
       (setq temp (cut:var-value obj poses-list))
       (list (subseq temp 0 3)

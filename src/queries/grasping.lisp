@@ -4,23 +4,23 @@
 
 ;; grasping offsets -------------------------------------------------------------
 
-(defparameter *lift-z-offset* 0.0 "in meters") ;0.15
+(defparameter *lift-z-offset* 0.15 "in meters") ;0.15
 
-(defparameter *muesli-grasp-z-offset* 0.0 "in meters") ; 0.13
-(defparameter *muesli-grasp-xy-offset* 0.0 "in meters") ; -0.03
+(defparameter *muesli-grasp-z-offset* 0.13 "in meters") ; 0.13
+(defparameter *muesli-grasp-xy-offset* -0.03 "in meters") ; -0.03
 (defparameter *muesli-pregrasp-xy-offset* 0.0 "in meters")  ; 0.15
 
-(defparameter *milk-grasp-xy-offset* 0.0 "in meters") ;-0.20
+(defparameter *milk-grasp-xy-offset* -0.05 "in meters") ;-0.20
 (defparameter *milk-grasp-z-offset* 0.0 "in meters")
-(defparameter *milk-pregrasp-xy-offset* 0.0 "in meters") ;0.15
+(defparameter *milk-pregrasp-xy-offset* -0.05 "in meters") ;0.15
 
-(defparameter *bowl-grasp-x-offset* 0.07 "in meters")
-(defparameter *bowl-grasp-z-offset* 0.01 "in meters")
-(defparameter *bowl-pregrasp-z-offset* 0.15 "in meters")
+(defparameter *bowl-grasp-x-offset* 0.07 "in meters")   ;0.07
+(defparameter *bowl-grasp-z-offset* 0.01 "in meters")   ;0.01
+(defparameter *bowl-pregrasp-z-offset* 0.15 "in meters");0.15
 
-(defparameter *cup-grasp-z-offset* 0.03 "in meters") ; 0.03
+(defparameter *cup-grasp-z-offset* -0.03 "in meters") ; 0.03
 (defparameter *cup-grasp-xy-offset* 0.02 "in meters") ; 0.02
-(defparameter *cup-pregrasp-xy-offset* 0.15 "in meters") ; 0.15
+(defparameter *cup-pregrasp-xy-offset* -0.15 "in meters") ; 0.15
 
 ;; grasping force in Nm --------------------------------------------------------
 (defmethod get-object-type-gripping-effort ((object-type (eql :ba-muesli))) 15)
@@ -41,30 +41,28 @@
                                                       arm grasp grasp-transform)
   (cram-tf:translate-transform-stamped grasp-transform :z-offset *lift-z-offset*))
 
-;; grasps -----------------------------------------------------------------------
+;; grasps ---------------------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------
+;;  MUESLI
+;------------------------------------------------------------------------------------------------
 
-;; --- MUESLI ---
-
-;;HUMAN grasp
-
-
-;;HUMAN OTHER SIDE grasp 
 (defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-muesli))
                                                  object-name
                                                  arm
-                                                 (grasp (eql :human-other-grasp)))
+                                                 (grasp (eql :human-grasp)))
   (print "GRASPING STUFF LIKE A HUMAN.")
   (let* (transf
          end-transf)
+
     ;; transf. from Map to Obj?
-    (setq transf 
+    (setq transf
           (cl-tf:transform*
             (cl-tf:transform-inv
-             (make-poses "?PoseObjStart"))
-            (make-poses "?PoseHandStart")
-            (human-to-right-robot-hand-transform)
-           ))
-    (print "***human-other-grasp***")
+               (make-poses "?PoseObjStart"))
+           (make-poses "?PoseHandStart")
+           (human-to-robot-hand-transform)))
+    
+    (print "***human-grasp***")
     (setf end-transf
           (cl-tf:transform->transform-stamped
            (roslisp-utilities:rosify-underscores-lisp-name object-name)
@@ -73,30 +71,13 @@
              (:right cram-tf:*robot-right-tool-frame*))
            0.0
            transf))
-                     
-    ;; (setq *end-transf* (cl-transforms-stamped:make-transform-stamped
-    ;;                     (roslisp-utilities:rosify-underscores-lisp-name object-name)
-                        
-    ;;                     (ecase arm
-    ;;                       (:left cram-tf:*robot-left-tool-frame*)
-    ;;                       (:right cram-tf:*robot-right-tool-frame*))
-    ;;                     0.0
-    ;;                     (cl-transforms:make-3d-vector
-    ;;                      (cl-tf:x (cl-tf:translation *transf*))
-    ;;                      0.0
-    ;;                      (- *muesli-grasp-offset* (cl-tf:z (cl-tf:translation *transf*))))
 
-    ;;                     (cl-tf:rotation *transf*)
-    ;;                     ;; (cl-transforms:make-quaternion 0.5 0.5 0.5 0.5 )
-    ;;                     ))
     (print "------------------------------")
     (print "THIS IS THE END TRANSFORM:")
     (print "------------------------------")
     (print end-transf)
     end-transf))
 
-;;----------------------------------------------------------------------------------------------------
-;;  MUESLI
 (defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :ba-muesli))
                                                           object-name
                                                           arm
@@ -110,100 +91,155 @@
                                                               (grasp (eql :human-grasp))
                                                               grasp-transform)
   (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *muesli-pregrasp-xy-offset*)))
+;------------------------------------------------------------------------------------------------
+;; MILK -----------------------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------
+(defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-milk))
+                                                 object-name
+                                                 arm
+                                                 (grasp (eql :human-grasp)))
+  (print "GRASPING STUFF LIKE A HUMAN.")
+  (let* (transf
+         end-transf)
 
-;---
+    ;; transf. from Map to Obj?
+    (setq transf
+          (cl-tf:transform*
+            (cl-tf:transform-inv
+               (make-poses "?PoseObjStart"))
+           (make-poses "?PoseHandStart")
+           (human-to-robot-hand-transform)))
+    
+    (print "***human-grasp***")
+    (setf end-transf
+          (cl-tf:transform->transform-stamped
+           (roslisp-utilities:rosify-underscores-lisp-name object-name)
+           (ecase arm
+             (:left cram-tf:*robot-left-tool-frame*)
+             (:right cram-tf:*robot-right-tool-frame*))
+           0.0
+           transf))
 
-(defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :ba-muesli))
-                                                          object-name
-                                                          arm
-                                                          (grasp (eql :human-other-grasp))
-                                                          grasp-transform)
-  (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *muesli-pregrasp-xy-offset*)
-                                                       :z-offset *lift-z-offset*))
+    (print "------------------------------")
+    (print "THIS IS THE END TRANSFORM:")
+    (print "------------------------------")
+    (print end-transf)
+    end-transf))
 
-
-(defmethod get-object-type-to-gripper-2nd-pregrasp-transform ((object-type (eql :ba-muesli))
-                                                              object-name
-                                                              arm
-                                                              (grasp (eql :human-other-grasp))
-                                                              grasp-transform)
-  (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *muesli-pregrasp-xy-offset*)))
-
-
-
-;; MILK
 (defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :ba-milk))
                                                           object-name
                                                           arm
-                                                          (grasp (eql :human-other-grasp))
+                                                          (grasp (eql :human-grasp))
                                                           grasp-transform)
   (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *milk-pregrasp-xy-offset*)
                                                        :z-offset *lift-z-offset*))
+
+
 (defmethod get-object-type-to-gripper-2nd-pregrasp-transform ((object-type (eql :ba-milk))
                                                               object-name
                                                               arm
-                                                              (grasp (eql :human-other-grasp))
+                                                              (grasp (eql :human-grasp))
                                                               grasp-transform)
   (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *milk-pregrasp-xy-offset*)))
 
 
 
-
-
-
-;; MILK ----------------------------------------------------------------------------------------------
-(defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-milk))
+;------------------------------------------------------------------------------------------------
+; BOWL ------------------------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------
+(defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-bowl))
                                                  object-name
                                                  arm
-                                                 (grasp (eql :human-other-grasp)))
+                                                 (grasp (eql :human-grasp)))
   (print "GRASPING STUFF LIKE A HUMAN.")
-  (let* ((*transf* nil)
-         (*end-transf*))
-    ;; transf. from Map to Obj?
-    (setq *transf* 
-          (cl-tf:transform*
-           (cl-tf:transform-inv
-            (make-poses "?PoseObjStart"))
-           (make-poses "?PoseHandStart")
-           (human-to-left-robot-hand-transform)
-          )
-          ;; (cl-tf:transform* (cl-tf:transform* (make-poses "?PoseHandStart")
-          ;;                                     (human-to-left-robot-hand-transform)) 
-          ;;                   (cut:var-value
-          ;;              '?transform
-          ;;    (car (prolog:prolog
-          ;;          `(and (cram-robot-interfaces:robot ?robot)
-          ;;                (cram-robot-interfaces:standard-to-particular-gripper-transform 
-          ;;                 ?robot ?transform))))))
-          )
-    (print "***human-other-grasp***")
-                     
-    (setq *end-transf* (cl-transforms-stamped:make-transform-stamped
-                        (roslisp-utilities:rosify-underscores-lisp-name object-name)
-                        
-                        (ecase arm
-                          (:left cram-tf:*robot-left-tool-frame*)
-                          (:right cram-tf:*robot-right-tool-frame*))
-                         0.0
-                        
-                        (cl-tf:translation *transf*)
+  (let* (transf
+         end-transf)
 
-                        (cl-tf:rotation *transf*)
-                                                ))
+    ;; transf. from Map to Obj?
+    (setq transf
+          (cl-tf:transform*
+            (cl-tf:transform-inv
+               (make-poses "?PoseObjStart"))
+           (make-poses "?PoseHandStart")
+           (human-to-robot-hand-transform)))
+    
+    (print "***human-grasp***")
+    (setf end-transf
+          (cl-tf:transform->transform-stamped
+           (roslisp-utilities:rosify-underscores-lisp-name object-name)
+           (ecase arm
+             (:left cram-tf:*robot-left-tool-frame*)
+             (:right cram-tf:*robot-right-tool-frame*))
+           0.0
+           transf))
+
     (print "------------------------------")
     (print "THIS IS THE END TRANSFORM:")
     (print "------------------------------")
-    (print *end-transf*)))
+    (print end-transf)
+    end-transf))
 
-; BOWL -------------------------------------------------------------------------------------------
+(defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :ba-bowl))
+                                                          object-name
+                                                          arm
+                                                          (grasp (eql :human-grasp))
+                                                          grasp-transform)
+  (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *bowl-pregrasp-z-offset*)
+                                                       :z-offset *lift-z-offset*))
 
+
+(defmethod get-object-type-to-gripper-2nd-pregrasp-transform ((object-type (eql :ba-bowl))
+                                                              object-name
+                                                              arm
+                                                              (grasp (eql :human-grasp))
+                                                              grasp-transform)
+  (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *bowl-pregrasp-z-offset*)))
 ;------------------------------------------------------------------------------------------------
-; CUP --------------------------------------------------------------------------------------------
-
-
+; CUP -------------------------------------------------------------------------------------------
 ;------------------------------------------------------------------------------------------------
-; BOWL  --------------------------------------------------------------------------------------------
 
-;----------------------------------------------------------------------------------------------------
+(defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-cup))
+                                                 object-name
+                                                 arm
+                                                 (grasp (eql :human-grasp)))
+  (print "GRASPING STUFF LIKE A HUMAN.")
+  (let* (transf
+         end-transf)
 
+    ;; transf. from Map to Obj?
+    (setq transf
+          (cl-tf:transform*
+            (cl-tf:transform-inv
+               (make-poses "?PoseObjStart"))
+           (make-poses "?PoseHandStart")
+           (human-to-robot-hand-transform)))
+    
+    (print "***human-grasp***")
+    (setf end-transf
+          (cl-tf:transform->transform-stamped
+           (roslisp-utilities:rosify-underscores-lisp-name object-name)
+           (ecase arm
+             (:left cram-tf:*robot-left-tool-frame*)
+             (:right cram-tf:*robot-right-tool-frame*))
+           0.0
+           transf))
 
+    (print "------------------------------")
+    (print "THIS IS THE END TRANSFORM:")
+    (print "------------------------------")
+    (print end-transf)
+    end-transf))
+
+(defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :ba-cup))
+                                                          object-name
+                                                          arm
+                                                          (grasp (eql :human-grasp))
+                                                          grasp-transform)
+  (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *cup-pregrasp-xy-offset*)
+                                                       :z-offset *lift-z-offset*))
+(defmethod get-object-type-to-gripper-2nd-pregrasp-transform ((object-type (eql :ba-cup))
+                                                              object-name
+                                                              arm
+                                                              (grasp (eql :human-grasp))
+                                                              grasp-transform)
+  (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *cup-pregrasp-xy-offset*)))

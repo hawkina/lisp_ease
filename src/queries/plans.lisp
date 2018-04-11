@@ -19,7 +19,7 @@
 
 ;; ---------------------------------------------------------------------------------------
 ;; TODO finish making this universal ------------------------------------------------------
-(defun pick-up-obj ()
+(defun pick-up-obj (?type)
     (let* ((?obj-desig nil)
            (?arm (get-hand)))
         (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
@@ -27,7 +27,7 @@
              (setf ?obj-desig
                    (exe:perform (desig:an action
                                           (type detecting)
-                                          (object (desig:an object (type ba-muesli))))))
+                                          (object (desig:an object (type ?type))))))
              (print  (desig:reference
                        (desig:an action
                                  (type picking-up)
@@ -48,13 +48,13 @@
              (exe:perform
               (desig:a motion (type moving-torso) (joint-angle ?angle))))))
 
-(defun execute-pick-and-place ()
+(defun execute-pick-and-place (type)
   (pick-and-place  (set-grasp-base-pose (make-poses "?PoseCameraStart"))
                    (set-grasp-look-pose (make-poses "?PoseObjStart"))
                    (set-grasp-base-pose (make-poses "?PoseCameraEnd"))
                    (set-grasp-look-pose (make-poses "?PoseObjEnd"))
-                   (set-place-pose (make-poses "?PoseObjEnd"))
-                   ':ba-muesli))
+                   (set-grasp-look-pose (make-poses "?PoseObjEnd"))
+                   type))
 
 (defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose ?type) 
   (let* ((?obj-desig nil)
@@ -80,7 +80,7 @@
                            (type picking-up)
                            (arm ?arm)
                            (object ?obj-desig))))
-        ;; pick uo obj
+        ;; pick up obj
         (exe:perform 
          (desig:an action
                    (type picking-up)
@@ -289,21 +289,6 @@
 )
 
 
-(defun alternative-demo (object)
-  (move-object  (make-poses "?PoseObjStart") object)
-  (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
-  )
 
-;; placing doesnt work in the conventional way. but calling this in the repl works:
-;; (defun placing-b ()
-;;   (defvar ?test (set-place-pose (make-poses "?PoseObjEnd")))
-;;    (let* ()
-;;     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-;;       (cpl:top-level
-;;        (exe:perform
-;;         (desig:an action
-;;                   (type placing)
-;;                   (arm :left)
-;;                   (object ?desig-saver)
-;;                   (target (desig:a location (pose ?test)))))))))
+
 

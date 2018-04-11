@@ -112,9 +112,37 @@
 ;; Note: the name has to be as the event-get-all-values function knows it
 ;; example: "?PoseHandStart"
 (defun make-poses (name)
-  (quaternion-w-flip (make-pose (cut:var-value (intern name) poses-list))))
+  (quaternion-w-flip
+   (make-pose (cut:var-value (intern name) poses-list))))
 
 
 
-
-
+;;;;
+;; (defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-muesli))
+;;                                                  object-name
+;;                                                  arm
+;;                                                  (grasp (eql :human-other-grasp)))
+;;   (print "GRASPING STUFF LIKE A HUMAN.")
+;;   (let* (transf
+;;          end-transf
+;;          test)
+;;     (setq test (cl-tf:make-transform 
+;;                 (cl-tf:make-3d-vector -3.9701008796691895d0 -1.6899659633636475d0 0.975683331489563d0)
+;;                 (cl-tf:make-quaternion -2.142989687854424d-4 0.7071033716201782d0 0.7071100473403931d0 -4.7417543828487396d-4)))
+;;     ;; transf. from Map to Obj?
+;;     (setq transf
+;;           (cl-tf:transform*
+;;             (cl-tf:transform-inv
+;;                (make-poses "?PoseObjStart"))
+;;            (make-poses "?PoseHandStart")
+;;            (human-to-right-robot-hand-transform)))
+    
+;;     (print "***human-other-grasp***")
+;;     (setf end-transf
+;;           (cl-tf:transform->transform-stamped
+;;            (roslisp-utilities:rosify-underscores-lisp-name object-name)
+;;            (ecase arm
+;;              (:left cram-tf:*robot-left-tool-frame*)
+;;              (:right cram-tf:*robot-right-tool-frame*))
+;;            0.0
+;;            transf))

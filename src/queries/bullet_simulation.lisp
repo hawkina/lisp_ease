@@ -63,58 +63,29 @@
 
 
 
-;; same as make-pose just for bullet world
-(defun make-bullet-pose (pose)
-  (list
-   (subseq pose 0 3)
-   (subseq pose 3 7)))
+;; ;; same as make-pose just for bullet world
+;; (defun make-bullet-pose (pose)
+;;   (list
+;;    (subseq pose 0 3)
+;;    (subseq pose 3 7)))
 
-;; name has to be a string and has to include a ?.
-;; ex: ?PoseHandStart
-(defun make-bullet-poses (name)
-  (make-bullet-pose (cut:var-value (intern name) (get-poses-from-event))))
+;; ;; name has to be a string and has to include a ?.
+;; ;; ex: ?PoseHandStart
+;; (defun make-bullet-poses (name)
+;;   (make-bullet-pose (cut:var-value (intern name) (get-poses-from-event))))
 
+; usecase: (move-object (pose-lists-parser '|?PoseObjEnd|))
+; moves object to the pose.
 (defun move-object (transform obj)
   (let* ((pose (cl-tf:transform->pose transform)))
     (prolog:prolog `(and (btr:bullet-world ?world)
                          (assert (btr:object-pose ?world ,obj ,pose))))))
-
-; usecase: (move-object (pose-lists-parser '|?PoseObjEnd|))
-; moves object to the pose.
-
-
-(defun check-obj-in-world (object-name)
-  (btr:object btr:*current-bullet-world* object-name))
-
- 
-(defun start-sim ()
-  "simulates the world for a second."
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:simulate ?world 10))))
-
-(defun check-stability-of-sim ()
-  "checks if the simulation is stable, or if run for a longer time, some objects would change their position. If the result is anything but NIL, the world is stable."
-  (prolog:prolog '(and (btr:bullet-world ?world)
-                              (btr:simulate ?world 100))))
-
-
-;; flip y axes and y of quaternion
-(defun flip-left-to-right-handedness (transform)
-  (cl-tf:make-transform
-   (cl-tf:translation transform)
-   (cl-tf:make-quaternion
-    (cl-tf:x (cl-tf:rotation transform))
-    (- (cl-tf:y (cl-tf:rotation transform)))
-    (cl-tf:z (cl-tf:rotation transform))
-    (cl-tf:w (cl-tf:rotation transform)))))
-
 
 (defun quaternion-w-flip (pose)
   (let* ((quaternion (cl-tf:rotation pose)))
     (cl-tf:make-transform
      (cl-tf:translation pose)
      (cl-tf:make-quaternion (cl-tf:y quaternion) (cl-tf:z quaternion) (cl-tf:w  quaternion) (cl-tf:x quaternion)))))
-
 
 ;; remove z so we can move the robot to the according position
 (defun remove-z (pose)
@@ -123,51 +94,12 @@
      (cl-tf:make-3d-vector (cl-tf:x translation) (cl-tf:y translation) 0)
      (cl-tf:rotation pose))))
 
-;; closest one so far
-(defun apply-bullet-transform-start (transform)
-  (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector -2.6 -1.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          pi)) 
-   transform))
 
-(defun apply-bullet-transform-end (transform)
-  (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector -3.0 -0.5 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          pi)) 
-   transform))
-
-(defun apply-bullet-transform-old (transform)
-  (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector -2.7 -1.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          pi)) 
-   transform))
-
-(defun apply-bullet-rotation (transform)
-    (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          pi)) 
-   transform))
-
-(defun apply-rotation (transform)
-    (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          (/ pi 2))) 
-   transform))
-
-(defun human-to-right-robot-hand-transform ()
-  (let ((alpha  (/ pi 4)))
+(defun human-to-robot-hand-transform ()
+  (let ((alpha  0;; (/ pi 4)
+                ))
       (cl-tf:make-transform
-       (cl-tf:make-3d-vector 0.0 -0.05 0.15)
+       (cl-tf:make-3d-vector 0.0 -0.07 0.2)
        (cl-tf:matrix->quaternion 
         (make-array '(3 3)
                     :initial-contents
@@ -186,27 +118,10 @@
                       (,(- (cos alpha)) 0 ,(- (sin alpha)))
                       (,(- (sin alpha)) 0 ,(cos alpha))))))))
 
-
-
-
-;; (defun human-to-right-robot-hand-transform ()
-;;   (let ((alpha 0.0 ))  ;(/ pi -5)
-;;       (cl-tf:make-transform
-;;        (cl-tf:make-3d-vector 0.0  0.0 0.0)
-;;        (cl-tf:matrix->quaternion 
-;;         (make-array '(3 3)
-;;                     :initial-contents
-;;                     `((,(+ (sin alpha))  ,(+ (cos alpha))  0 )
-;;                       (0                  0               1 )
-;;                       (,(+ (cos alpha))  ,(- (sin alpha))  0 )))))))
-
-
 ;;(make-poses "?PoseCameraStart")
 (defun move-robot (transform)
   ;; make the transform a viable robot position
-  (let* ((pose (cl-tf:transform->pose  (remove-z
-                                        ;; removed apply-bullet-transform from here
-                                        (quaternion-w-flip transform))))
+  (let* ((pose (cl-tf:transform->pose  (remove-z transform )))
          (quaternion (cl-tf:orientation pose))
          (x nil)
          (y nil))
@@ -262,38 +177,3 @@
                    (assert (btr:object ?world :mesh ba-axes ((1 1 1) (0 0 0 1))
                             :mass 0.2 :color (0 1 1) :mesh :ba-axes)))))
 
-
-;; just when I want to spawn all of them 
-(defun spawn-all-own-obj ()
-  (add-bowl)
-  (add-cup)
-  (add-muesli)
-  (add-spoon)
-  (add-milk))
-
-
-(defun set-axes ()
-  (let* ((transf_r)
-         (transf_l))
-    (setq transf_r (car
-                  (cram-projection::projection-environment-result-result
-                   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
-                     (cram-tf::lookup-transform cram-tf::*transformer* "map" "r_gripper_r_finger_tip_link" )))))
-    (setq transf_l (car
-                  (cram-projection::projection-environment-result-result
-                   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
-                     (cram-tf::lookup-transform cram-tf::*transformer* "map" "l_gripper_l_finger_tip_link" )))))
-    
-    (setq transf_r
-          (cl-tf:make-transform
-           (cl-tf:translation transf_r)
-           (cl-tf:rotation transf_r)))
-    (move-object transf_r 'ba-axes)
-   (setq transf_l
-          (cl-tf:make-transform
-           (cl-tf:translation transf_l)
-           (cl-tf:rotation transf_l)))
-    
-    (move-object transf_r 'ba-axes)
-    (move-object transf_l 'ba-axes2)
-    (move-object (make-poses "?PoseHandStart") 'ba-axes3)))

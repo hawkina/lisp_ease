@@ -16,8 +16,6 @@
 (defmethod get-object-type-gripping-effort ((object-type (eql :weide-milch-small))) 15)
 
 
-
-
 ;;; FRONT grasp
 (defmethod get-object-type-to-gripper-transform ((object-type (eql :cereal))
                                                  object-name
@@ -52,7 +50,7 @@
 
 ;; back grasp
 
-(defmethod get-object-type-to-gripper-transform ((object-type (eql :cereal))
+(defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-muesli))
                                                  object-name
                                                  arm
                                                  (grasp (eql :back)))
@@ -67,14 +65,14 @@
     #2A((0 0 1)
         (1 0 0)
         (0 1 0)))))
-(defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :cereal))
+(defmethod get-object-type-to-gripper-pregrasp-transform ((object-type (eql :ba-muesli))
                                                           object-name
                                                           arm
                                                           (grasp (eql :back))
                                                           grasp-transform)
   (cram-tf:translate-transform-stamped grasp-transform :x-offset (- *cereal-pregrasp-xy-offset*)
                                                        :z-offset *lift-z-offset*))
-(defmethod get-object-type-to-gripper-2nd-pregrasp-transform ((object-type (eql :cereal))
+(defmethod get-object-type-to-gripper-2nd-pregrasp-transform ((object-type (eql :ba-muesli))
                                                               object-name
                                                               arm
                                                               (grasp (eql :back))
