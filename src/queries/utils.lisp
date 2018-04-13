@@ -3,7 +3,7 @@
 
 ;; get-info of an object
 (defun get-info (infoObj)
-  (cut:var-value (intern infoObj)  poses-list))
+  (cut:var-value (intern infoObj)  *poses-list*))
 
 ;; returns the hand used in the curretnly loaded episode
 (defun get-hand ()
@@ -23,7 +23,7 @@
 
 (defun make-transform-hand-std-pr2 ()
   (cl-tf:transform* (make-poses "?PoseHandStart")
-                    (human-to-right-robot-hand-transform)
+                    (human-to-robot-hand-transform)
                     cram-pr2-description::*standard-to-pr2-gripper-transform*))
 
 (defun get-robot-in-map-pose () 
@@ -50,7 +50,7 @@
   (cl-tf:transform->transform-stamped "map" "hand" 0.0 (make-poses "?PoseHandStart"))
 
   ;; unreal hand T standard gripper
-  (human-to-right-robot-hand-transform)
+  (human-to-robot-hand-transform)
   )
 
 
@@ -107,7 +107,7 @@
 
 (defun apply-bullet-transform-old (transform)
   (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector -2.7 -1.0 0.0)
+   (cl-tf:make-transform (cl-tf:make-3d-vector -2.65 -0.7 0.0)
                          (cl-tf:axis-angle->quaternion
                           (cl-tf:make-3d-vector 0 0 1)
                           pi)) 
@@ -191,18 +191,30 @@
 
                                         ;splits the list of the pose into pose and quaternion
                                         ;for specific usecase test function
-(defun test-pose-lists-parser ()
-  (let ((temp))
-    (progn
-      (setq temp (cut:var-value '|?PoseCameraStart| poses-list))
-      (list (subseq temp 0 3)
-            '(0 0 1 0)))))
+;; (defun test-pose-lists-parser ()
+;;   (let ((temp))
+;;     (progn
+;;       (setq temp (cut:var-value '|?PoseCameraStart| poses-list))
+;;       (list (subseq temp 0 3)
+;;             '(0 0 1 0)))))
 
 
 
-(defun pose-lists-parser (obj)
-  (let ((temp))
-    (progn
-      (setq temp (cut:var-value obj poses-list))
-      (list (subseq temp 0 3)
-            (subseq temp 3 7)))))
+;; (defun pose-lists-parser (obj)
+;;   (let ((temp))
+;;     (progn
+;;       (setq temp (cut:var-value obj poses-list))
+;;       (list (subseq temp 0 3)
+;;             (subseq temp 3 7)))))
+
+;; for spawning boxes on the edges of the table
+(defun table-calibration (max)
+  (let (temp-name)
+    (get-grasp-something-poses)
+    (dotimes (c max )
+      (get-next-obj-poses c)
+      (setf temp-name (intern (concatenate 'string  "ba-muesli" (write-to-string c))))
+      (add-muesli temp-name)
+      (format nil "added: ~D out of: ~D ~%" c max)
+      (move-object (apply-bullet-transform-old (make-poses "?PoseObjStart")) temp-name)
+      )))

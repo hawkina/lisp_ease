@@ -1,7 +1,7 @@
 (in-package :le)
 
-(defvar poses-list nil)
-(defvar orig-poses-list nil)
+(defvar *poses-list* nil)
+(defvar *orig-poses-list* nil)
 
 (defun map-marker-init ()
   (prolog-simple "sem_map_inst(MapInst),!,marker_update(object(MapInst))." ))
@@ -23,11 +23,13 @@
   (map-marker-init))
 
 ;; care to give the right rcg stamp
+;; rcg_c is for finding out the displacement
+;; rcg_f has the to date better grasps
 (defun init-set-clean-table ()
   (start-ros-node "lisp_ease")
   (register-ros-package "knowrob_robcog")
-  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/Episodes//")
-  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/SemanticMap.owl")
+  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_g/Episodes//")
+  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_g/SemanticMap.owl")
   (connect-to-db "Own-Episodes_set-clean-table")  
   (map-marker-init))
 
@@ -39,7 +41,7 @@
 
 (defun get-grasp-something-poses ()
 
-  (setq orig-poses-list (prolog-simple "ep_inst(EpInst),
+  (setq *orig-poses-list* (prolog-simple "ep_inst(EpInst),
     u_occurs(EpInst, EventInst, Start, End),
     event_type(EventInst, knowrob:'GraspingSomething'),
     rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
@@ -62,12 +64,12 @@
     actor_pose(EpInst, HandInstShortName, Start, PoseHandStart),
     actor_pose(EpInst, HandInstShortName, End, PoseHandEnd)."))
 
-  (setq poses-list (cut:lazy-car orig-poses-list)))
+  (setq *poses-list* (cut:lazy-car *orig-poses-list*)))
 
 
 (defun alternative-get-grasp-something-poses ()
 
-  (setq orig-poses-list (prolog-simple "ep_inst(EpInst),
+  (setq *orig-poses-list* (prolog-simple "ep_inst(EpInst),
     u_occurs(EpInst, EventInst, Start, End),
     event_type(EventInst, knowrob:'GraspingSomething'),
     rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
@@ -90,15 +92,15 @@
     object_pose_at_time(HandInst, Start, PoseHandStart),
     object_pose_at_time(HandInst, End, PoseHandEnd)."))
 
-  (setq poses-list (cut:lazy-car orig-poses-list)))
+  (setq *poses-list* (cut:lazy-car *orig-poses-list*)))
 
 
 ;; count is the number of the event we want to get poses from
 (defun get-next-obj-poses (count)
-  (if (setq poses-list  (cut:lazy-elt orig-poses-list count))
+  (if (setq *poses-list*  (cut:lazy-elt *orig-poses-list* count))
       (progn
         (format t "Poses from event nr. ~D ." count)
-        poses-list)
+        *poses-list*)
       (format t "No poses for event nr. ~D available. There are no more events for this query. Query result was NIL. " count)))
 
 ;; there must be a prettier way of doing this...?
@@ -111,38 +113,42 @@
 ;; makes a pose of an object and given time. Gets the name of the object as param
 ;; Note: the name has to be as the event-get-all-values function knows it
 ;; example: "?PoseHandStart"
-(defun make-poses (name)
+(defun make-poses (name &optional (poses-list *poses-list*))
   (quaternion-w-flip
    (make-pose (cut:var-value (intern name) poses-list))))
 
+;; ---------------------------------------------------------------------------------------------------
+;; Queries for calibrating the offset between the bullet world and the real world.
+;; which means placing objects on the corners of tables in VR and spawning them here a tthe corners.
+
+;;getting the positions of all food objects (milks and cereals were used for placing stuff)
+(defun get-all-food-drink-poses ()
+  (let* (poses-list)
+    ;; get a pose and object
+    (setq poses-list
+          (prolog-simple "ep_inst(EpInst),
+                        u_occurs(EpInst, EventInst, Start, End),
+                        owl_individual_of(ObjInst, knowrob:'FoodOrDrink'),
+                        iri_xml_namespace(ObjInst, _, ObjShortName),
+                        actor_pose(EpInst, ObjShortName, Start, PoseObj),
+                        obj_type(ObjInst, ObjType)."))
+    ;;check of object is of type milk or something
+    (if (some #'identity
+                (mapcar
+                 #'(lambda ( str )
+                     (search str
+                             (string-downcase
+                              (cut:var-value
+                               (intern "?ObjShortName")
+                               (cut:lazy-car poses-list)))))
+                 ;; list of items against which it's being checked 
+                 '("milch" "cereal" "blub")))
+          (progn (list (cut:var-value
+                        (intern "?ObjShortName")
+                        (cut:lazy-car poses-list))
+                       (make-poses "?PoseObj" (cut:lazy-car poses-list)))))
 
 
-;;;;
-;; (defmethod get-object-type-to-gripper-transform ((object-type (eql :ba-muesli))
-;;                                                  object-name
-;;                                                  arm
-;;                                                  (grasp (eql :human-other-grasp)))
-;;   (print "GRASPING STUFF LIKE A HUMAN.")
-;;   (let* (transf
-;;          end-transf
-;;          test)
-;;     (setq test (cl-tf:make-transform 
-;;                 (cl-tf:make-3d-vector -3.9701008796691895d0 -1.6899659633636475d0 0.975683331489563d0)
-;;                 (cl-tf:make-quaternion -2.142989687854424d-4 0.7071033716201782d0 0.7071100473403931d0 -4.7417543828487396d-4)))
-;;     ;; transf. from Map to Obj?
-;;     (setq transf
-;;           (cl-tf:transform*
-;;             (cl-tf:transform-inv
-;;                (make-poses "?PoseObjStart"))
-;;            (make-poses "?PoseHandStart")
-;;            (human-to-right-robot-hand-transform)))
-    
-;;     (print "***human-other-grasp***")
-;;     (setf end-transf
-;;           (cl-tf:transform->transform-stamped
-;;            (roslisp-utilities:rosify-underscores-lisp-name object-name)
-;;            (ecase arm
-;;              (:left cram-tf:*robot-left-tool-frame*)
-;;              (:right cram-tf:*robot-right-tool-frame*))
-;;            0.0
-;;            transf))
+    )
+
+)
