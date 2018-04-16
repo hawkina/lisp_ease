@@ -107,16 +107,11 @@
                       (,(- (cos alpha)) 0 ,(- (sin alpha)))
                       (,(- (sin alpha)) 0 ,(cos alpha))))))))
 
-(defun human-to-left-robot-hand-transform ()
-  (let ((alpha  (/ pi 4)))
+(defun place-offset-transform ()
+  (let ()
       (cl-tf:make-transform
-       (cl-tf:make-3d-vector 0.0 -0.05 0.1)
-       (cl-tf:matrix->quaternion 
-        (make-array '(3 3)
-                    :initial-contents
-                    `((0                1 0)
-                      (,(- (cos alpha)) 0 ,(- (sin alpha)))
-                      (,(- (sin alpha)) 0 ,(cos alpha))))))))
+       (cl-tf:make-3d-vector 0.0 0.2 0.0)
+       (cl-tf:make-identity-rotation))))
 
 ;;(make-poses "?PoseCameraStart")
 (defun move-robot (transform)
@@ -175,6 +170,6 @@
 
 (defun add-axes ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ba-axes ((1 1 1) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ba-axes ((2 2 1) (0 0 0 1))
                             :mass 0.2 :color (0 1 1) :mesh :ba-axes)))))
 

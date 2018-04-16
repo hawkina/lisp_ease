@@ -208,6 +208,7 @@
 ;;             (subseq temp 3 7)))))
 
 ;; for spawning boxes on the edges of the table
+;; or generally to be used when more then one object of one kind needs to be spawned somewhere. 
 (defun table-calibration (max)
   (let (temp-name)
     (get-grasp-something-poses)
@@ -216,5 +217,5 @@
       (setf temp-name (intern (concatenate 'string  "ba-muesli" (write-to-string c))))
       (add-muesli temp-name)
       (format nil "added: ~D out of: ~D ~%" c max)
-      (move-object (apply-bullet-transform-old (make-poses "?PoseObjStart")) temp-name)
-      )))
+      (move-object (apply-bullet-transform-old (make-poses "?PoseCameraStart")) temp-name)))
+)

@@ -28,8 +28,8 @@
 (defun init-set-clean-table ()
   (start-ros-node "lisp_ease")
   (register-ros-package "knowrob_robcog")
-  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_g/Episodes//")
-  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_g/SemanticMap.owl")
+  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/Episodes//")
+  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/SemanticMap.owl")
   (connect-to-db "Own-Episodes_set-clean-table")  
   (map-marker-init))
 
@@ -67,33 +67,6 @@
   (setq *poses-list* (cut:lazy-car *orig-poses-list*)))
 
 
-(defun alternative-get-grasp-something-poses ()
-
-  (setq *orig-poses-list* (prolog-simple "ep_inst(EpInst),
-    u_occurs(EpInst, EventInst, Start, End),
-    event_type(EventInst, knowrob:'GraspingSomething'),
-    rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
-    performed_by(EventInst, HandInst),
-    iri_xml_namespace(HandInst,_, HandInstShortName),
-    obj_type(HandInst, HandType),
-
-    iri_xml_namespace(HandType, _, HandTypeName),
-    iri_xml_namespace(ObjActedOnInst, _, ObjShortName),
-
-    obj_type(CameraInst, knowrob:'CharacterCamera'),
-    iri_xml_namespace(CameraInst, _, CameraShortName),
-
-    object_pose_at_time(ObjActedOnInst, Start, PoseObjStart),
-    object_pose_at_time(ObjActedOnInst, End, PoseObjEnd),
-
-    object_pose_at_time(CameraInst, Start, PoseCameraStart),
-    object_pose_at_time(CameraInst, End, PoseCameraEnd),
-
-    object_pose_at_time(HandInst, Start, PoseHandStart),
-    object_pose_at_time(HandInst, End, PoseHandEnd)."))
-
-  (setq *poses-list* (cut:lazy-car *orig-poses-list*)))
-
 
 ;; count is the number of the event we want to get poses from
 (defun get-next-obj-poses (count)
@@ -114,14 +87,16 @@
 ;; Note: the name has to be as the event-get-all-values function knows it
 ;; example: "?PoseHandStart"
 (defun make-poses (name &optional (poses-list *poses-list*))
-  (quaternion-w-flip
-   (make-pose (cut:var-value (intern name) poses-list))))
+  (apply-bullet-transform-old
+   (quaternion-w-flip
+     (make-pose (cut:var-value (intern name) poses-list)))))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; Queries for calibrating the offset between the bullet world and the real world.
 ;; which means placing objects on the corners of tables in VR and spawning them here a tthe corners.
 
 ;;getting the positions of all food objects (milks and cereals were used for placing stuff)
+;;this doesn*t quite work yet
 (defun get-all-food-drink-poses ()
   (let* (poses-list)
     ;; get a pose and object
@@ -146,9 +121,34 @@
           (progn (list (cut:var-value
                         (intern "?ObjShortName")
                         (cut:lazy-car poses-list))
-                       (make-poses "?PoseObj" (cut:lazy-car poses-list)))))
+                       (make-poses "?PoseObj" (cut:lazy-car poses-list)))))))
 
 
-    )
-
-)
+(defun place-pose-btr-island ()
+  (let* (table-pose-oe
+         table-pose-bullet
+         place-pose)
+    ;; get pose of Table in map frame
+    (setq table-pose-oe
+          (make-poses "?PoseTable"
+                      (cut:lazy-car
+                       (prolog-simple "ep_inst(EpInst),
+                                       u_occurs(EpInst, EventInst, Start, End),
+                                       obj_type(TableInst, knowrob:'IslandArea'),
+                                       iri_xml_namespace(TableInst, _, TableShortName),
+                                       actor_pose(EpInst, TableShortName, Start, PoseTable)."))))
+    ;; get pose of table in bullet world
+    (setq table-pose-bullet (cl-tf:pose->transform
+                             (btr:pose
+                               (gethash '|iai_kitchen_kitchen_island|
+                                        (slot-value
+                                         (btr:object btr:*current-bullet-world* :kitchen)
+                                         'cram-bullet-reasoning:rigid-bodies)))))
+    
+    ;; calculate place pose relative to bullet table
+    (setq place-pose
+          (cl-tf:transform*
+           table-pose-bullet
+           (cl-tf:transform-inv table-pose-oe)
+           (make-poses "?PoseObjEnd")))
+  place-pose))

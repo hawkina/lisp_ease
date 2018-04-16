@@ -52,8 +52,8 @@
   (pick-and-place  (set-grasp-base-pose (make-poses "?PoseCameraStart"))
                    (set-grasp-look-pose (make-poses "?PoseObjStart"))
                    (set-grasp-base-pose (make-poses "?PoseCameraEnd"))
-                   (set-grasp-look-pose (make-poses "?PoseObjEnd"))
-                   (set-grasp-look-pose (make-poses "?PoseObjEnd"))
+                   (set-grasp-look-pose (place-pose-btr-island))
+                   (set-grasp-look-pose (place-pose-btr-island))
                    type))
 
 (defun pick-and-place (?grasping-base-pose ?grasping-look-pose ?placing-base-pose ?placing-look-pose ?place-pose ?type) 
@@ -261,11 +261,11 @@
   (add-axes)
   ;;axes 3
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ba-axes3 ((1 1 1) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ba-axes3 ((2 2 1) (0 0 0 1))
                             :mass 0.2 :color (1 0 0) :mesh :ba-axes))))
   ;; axes 2 
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ba-axes2 ((1 1 1) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ba-axes2 ((2 2 1) (0 0 0 1))
                             :mass 0.2 :color (0 1 0) :mesh :ba-axes))))
   (add-cup)
   (add-spoon)
