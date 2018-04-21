@@ -28,8 +28,8 @@
 (defun init-set-clean-table ()
   (start-ros-node "lisp_ease")
   (register-ros-package "knowrob_robcog")
-  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/Episodes//")
-  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_f/SemanticMap.owl")
+  (u-load-episodes "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_eval2/Episodes//")
+  (owl-parse "/media/hasu/Exte/episodes/Own-Episodes/set-clean-table/rcg_eval2/SemanticMap.owl")
   (connect-to-db "Own-Episodes_set-clean-table")  
   (map-marker-init))
 
@@ -40,30 +40,29 @@
 ;;---
 
 (defun get-grasp-something-poses ()
+  (setq *orig-poses-list*
+        (prolog-simple "ep_inst(EpInst),
+          u_occurs(EpInst, EventInst, Start, End),
+          event_type(EventInst, knowrob:'GraspingSomething'),
+          rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
+          performed_by(EventInst, HandInst),
+          iri_xml_namespace(HandInst,_, HandInstShortName),
+          obj_type(HandInst, HandType),
 
-  (setq *orig-poses-list* (prolog-simple "ep_inst(EpInst),
-    u_occurs(EpInst, EventInst, Start, End),
-    event_type(EventInst, knowrob:'GraspingSomething'),
-    rdf_has(EventInst, knowrob:'objectActedOn',ObjActedOnInst),
-    performed_by(EventInst, HandInst),
-    iri_xml_namespace(HandInst,_, HandInstShortName),
-    obj_type(HandInst, HandType),
+          iri_xml_namespace(HandType, _, HandTypeName),
+          iri_xml_namespace(ObjActedOnInst, _, ObjShortName),
 
-    iri_xml_namespace(HandType, _, HandTypeName),
-    iri_xml_namespace(ObjActedOnInst, _, ObjShortName),
+          obj_type(CameraInst, knowrob:'CharacterCamera'),
+          iri_xml_namespace(CameraInst, _, CameraShortName),
 
-    obj_type(CameraInst, knowrob:'CharacterCamera'),
-    iri_xml_namespace(CameraInst, _, CameraShortName),
+          actor_pose(EpInst, ObjShortName, Start, PoseObjStart),
+          actor_pose(EpInst, ObjShortName, End, PoseObjEnd),
 
-    actor_pose(EpInst, ObjShortName, Start, PoseObjStart),
-    actor_pose(EpInst, ObjShortName, End, PoseObjEnd),
+          actor_pose(EpInst, CameraShortName, Start, PoseCameraStart),
+          actor_pose(EpInst, CameraShortName, End, PoseCameraEnd),
 
-    actor_pose(EpInst, CameraShortName, Start, PoseCameraStart),
-    actor_pose(EpInst, CameraShortName, End, PoseCameraEnd),
-
-    actor_pose(EpInst, HandInstShortName, Start, PoseHandStart),
-    actor_pose(EpInst, HandInstShortName, End, PoseHandEnd)."))
-
+          actor_pose(EpInst, HandInstShortName, Start, PoseHandStart),
+          actor_pose(EpInst, HandInstShortName, End, PoseHandEnd)."))
   (setq *poses-list* (cut:lazy-car *orig-poses-list*)))
 
 
@@ -76,21 +75,20 @@
         *poses-list*)
       (format t "No poses for event nr. ~D available. There are no more events for this query. Query result was NIL. " count)))
 
+;; makes a pose of an object and given time. Gets the name of the object as param
+;; Note: the name has to be as the event-get-all-values function knows it
+;; example: "?PoseHandStart"
+(defun make-poses (name &optional (poses-list *poses-list*))
+  (apply-bullet-transform
+   (quaternion-w-flip
+     (make-pose (cut:var-value (intern name) poses-list)))))
+
 ;; there must be a prettier way of doing this...?
 ;; gets a list of 7 values as a parameter and makes a cl-transform out of it.
 (defun make-pose (pose)
   (cl-tf:make-transform
    (apply #'cl-tf:make-3d-vector (subseq pose 0 3))
    (apply #'cl-tf:make-quaternion (subseq pose 3 7))))
-
-;; makes a pose of an object and given time. Gets the name of the object as param
-;; Note: the name has to be as the event-get-all-values function knows it
-;; example: "?PoseHandStart"
-(defun make-poses (name &optional (poses-list *poses-list*))
-  (apply-bullet-transform-old
-   (quaternion-w-flip
-     (make-pose (cut:var-value (intern name) poses-list)))))
-
 ;; ---------------------------------------------------------------------------------------------------
 ;; Queries for calibrating the offset between the bullet world and the real world.
 ;; which means placing objects on the corners of tables in VR and spawning them here a tthe corners.
@@ -138,12 +136,13 @@
                                        iri_xml_namespace(TableInst, _, TableShortName),
                                        actor_pose(EpInst, TableShortName, Start, PoseTable)."))))
     ;; get pose of table in bullet world
-    (setq table-pose-bullet (cl-tf:pose->transform
-                             (btr:pose
-                               (gethash '|iai_kitchen_kitchen_island|
-                                        (slot-value
-                                         (btr:object btr:*current-bullet-world* :kitchen)
-                                         'cram-bullet-reasoning:rigid-bodies)))))
+    (setq table-pose-bullet
+          (cl-tf:pose->transform
+           (btr:pose
+            (gethash '|iai_kitchen_kitchen_island|
+                     (slot-value
+                      (btr:object btr:*current-bullet-world* :kitchen)
+                      'cram-bullet-reasoning:rigid-bodies)))))
     
     ;; calculate place pose relative to bullet table
     (setq place-pose
@@ -151,4 +150,5 @@
            table-pose-bullet
            (cl-tf:transform-inv table-pose-oe)
            (make-poses "?PoseObjEnd")))
-  place-pose))
+    place-pose))
+    

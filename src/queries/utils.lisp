@@ -67,7 +67,7 @@
 
 (defun alternative-demo (object)
   (move-object  (make-poses "?PoseObjStart") object)
-  (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
+  ;; (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
   )
 
 
@@ -87,25 +87,8 @@
 ;;                   (target (desig:a location (pose ?test)))))))))
 
 ;;-------------------------------------------------------------------------------------------
-;; old bullet transform adapting and rotating stuff
-;; closest one so far
-(defun apply-bullet-transform-start (transform)
-  (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector -2.6 -1.0 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          pi)) 
-   transform))
-
-(defun apply-bullet-transform-end (transform)
-  (cl-tf:transform*
-   (cl-tf:make-transform (cl-tf:make-3d-vector -3.0 -0.5 0.0)
-                         (cl-tf:axis-angle->quaternion
-                          (cl-tf:make-3d-vector 0 0 1)
-                          pi)) 
-   transform))
-
-(defun apply-bullet-transform-old (transform)
+;; new now! maybe rename...
+(defun apply-bullet-transform (transform)
   (cl-tf:transform*
    (cl-tf:make-transform (cl-tf:make-3d-vector -2.65 -0.7 0.0)
                          (cl-tf:axis-angle->quaternion
@@ -160,7 +143,7 @@
   (add-bowl)
   (add-cup)
   (add-muesli)
-  (add-spoon)
+  (add-fork)
   (add-milk))
 
 (defun set-axes ()
@@ -191,21 +174,6 @@
 
                                         ;splits the list of the pose into pose and quaternion
                                         ;for specific usecase test function
-;; (defun test-pose-lists-parser ()
-;;   (let ((temp))
-;;     (progn
-;;       (setq temp (cut:var-value '|?PoseCameraStart| poses-list))
-;;       (list (subseq temp 0 3)
-;;             '(0 0 1 0)))))
-
-
-
-;; (defun pose-lists-parser (obj)
-;;   (let ((temp))
-;;     (progn
-;;       (setq temp (cut:var-value obj poses-list))
-;;       (list (subseq temp 0 3)
-;;             (subseq temp 3 7)))))
 
 ;; for spawning boxes on the edges of the table
 ;; or generally to be used when more then one object of one kind needs to be spawned somewhere. 
@@ -217,5 +185,5 @@
       (setf temp-name (intern (concatenate 'string  "ba-muesli" (write-to-string c))))
       (add-muesli temp-name)
       (format nil "added: ~D out of: ~D ~%" c max)
-      (move-object (apply-bullet-transform-old (make-poses "?PoseCameraStart")) temp-name)))
+      (move-object (make-poses "?PoseCameraStart") temp-name)))
 )

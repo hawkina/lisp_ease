@@ -18,27 +18,26 @@
 
 
 ;; ---------------------------------------------------------------------------------------
-;; TODO finish making this universal ------------------------------------------------------
+;; pick up an object function       ------------------------------------------------------
 (defun pick-up-obj (?type)
-    (let* ((?obj-desig nil)
-           (?arm (get-hand)))
-        (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-           (cpl:top-level
-             (setf ?obj-desig
-                   (exe:perform (desig:an action
-                                          (type detecting)
-                                          (object (desig:an object (type ?type))))))
-             (print  (desig:reference
-                       (desig:an action
-                                 (type picking-up)
-                                 (arm ?arm)
-                                 (object ?obj-desig))))
-             (exe:perform 
-              (desig:an action
-                        (type picking-up)
-                        (arm ?arm)
-                        (object ?obj-desig)))
-             ))))
+  (let* ((?obj-desig nil)
+         (?arm (get-hand)))
+    (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
+      (cpl:top-level
+        (setf ?obj-desig
+              (exe:perform (desig:an action
+                                     (type detecting)
+                                     (object (desig:an object (type ?type))))))
+        (print  (desig:reference
+                 (desig:an action
+                           (type picking-up)
+                           (arm ?arm)
+                           (object ?obj-desig))))
+        (exe:perform 
+         (desig:an action
+                   (type picking-up)
+                   (arm ?arm)
+                   (object ?obj-desig)))))))
 
 
 ;works
@@ -259,6 +258,8 @@
   (add-bowl)
   (add-muesli)
   (add-axes)
+  (add-fork)
+  
   ;;axes 3
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh ba-axes3 ((2 2 1) (0 0 0 1))
@@ -268,7 +269,6 @@
                    (assert (btr:object ?world :mesh ba-axes2 ((2 2 1) (0 0 0 1))
                             :mass 0.2 :color (0 1 0) :mesh :ba-axes))))
   (add-cup)
-  (add-spoon)
   (add-milk)
   )
 

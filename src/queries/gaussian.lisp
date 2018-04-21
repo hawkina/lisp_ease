@@ -19,15 +19,7 @@
 
 ;; note: costmap is already being defined in the initialization of bullet-world
 ;; this is copied from bullet-world.lisp
-(prolog:def-fact-group costmap-metadata ()
-   (prolog:<- (location-costmap:costmap-size 12 12))
-   (prolog:<- (location-costmap:costmap-origin -6 -6))
-   (prolog:<- (location-costmap:costmap-resolution 0.05))
 
-   (prolog:<- (location-costmap:costmap-padding 0.2))
-   (prolog:<- (location-costmap:costmap-manipulation-padding 0.2))
-   (prolog:<- (location-costmap:costmap-in-reach-distance 0.6))
-   (prolog:<- (location-costmap:costmap-reach-minimal-distance 0.2)))
 
 
 
@@ -42,3 +34,8 @@
      (location-costmap:make-gauss-cost-function ?pose-origin
                                                 (prolog:lisp-fun (second (calculate-pose-covariance))))
      ?costmap)))
+
+
+
+
+

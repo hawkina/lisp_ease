@@ -63,17 +63,6 @@
 
 
 
-;; ;; same as make-pose just for bullet world
-;; (defun make-bullet-pose (pose)
-;;   (list
-;;    (subseq pose 0 3)
-;;    (subseq pose 3 7)))
-
-;; ;; name has to be a string and has to include a ?.
-;; ;; ex: ?PoseHandStart
-;; (defun make-bullet-poses (name)
-;;   (make-bullet-pose (cut:var-value (intern name) (get-poses-from-event))))
-
 ; usecase: (move-object (pose-lists-parser '|?PoseObjEnd|))
 ; moves object to the pose.
 (defun move-object (transform obj)
@@ -132,7 +121,7 @@
     
     (prolog:prolog `(and (btr:bullet-world ?world)
                          (assert (btr:object-pose ?world cram-pr2-description:pr2 ,pose))))))
-
+;; move to utils?----------------------------------------------------------------------------------
 (defun move-head (pose)
   (prolog:prolog `(and (btr:bullet-world ?world)
                        (cram-robot-interfaces:robot ?robot )
@@ -143,7 +132,7 @@
   (prolog:prolog `(and (btr:bullet-world ?world)
                               (cram-robot-interfaces:robot ?robot)
                               (btr:visible ?world ?robot ,name-of-object))))
-
+;; move to util end--------------------------------------------------------------------------------
 
 (defun add-bowl ()
   (prolog:prolog '(and (btr:bullet-world ?world)
@@ -159,10 +148,11 @@
                    (assert (btr:object ?world :mesh ,?name ((0 3 2) (0 0 0 1))
                             :mass 0.2 :color (1 0 1) :mesh :ba-muesli)))))
 
-(defun add-spoon ()
+(defun add-fork ()
   (prolog:prolog '(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ba-spoon ((0 4 2) (0 0 0 1))
-                            :mass 0.2 :color (0 0 1) :mesh :ba-spoon)))))
+                   (assert (btr:object ?world :mesh ba-fork ((0 4 2) (0 0 0 1))
+                            :mass 0.2 :color (0 0 1) :mesh :ba-fork)))))
+
 (defun add-milk (&optional (?name 'ba-milk))
   (prolog:prolog `(and (btr:bullet-world ?world)
                    (assert (btr:object ?world :mesh ,?name ((0 6 2) (0 0 0 1))

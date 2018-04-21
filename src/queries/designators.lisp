@@ -62,9 +62,9 @@
   ;;   (member ?object-type (:ba-muesli :ba-milk :ba-spoon :ba-cup  :ba-bowl)))
 
   (cram-prolog:<- (orientation-matters ?object-type)
-    (member ?object-type (:ba-spoon)))
+    (member ?object-type (:ba-fork)))
 
-  (cram-prolog:<- (object-type-grasp :ba-spoon :human-grasp))
+  (cram-prolog:<- (object-type-grasp :ba-fork :human-grasp))
   ;; (cram-prolog:<- (object-type-grasp :ba-spoon :top))
   ;; (<- (object-type-grasp :spoon :top))
   ;; (<- (object-type-grasp :fork :top))
