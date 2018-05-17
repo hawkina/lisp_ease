@@ -25,6 +25,10 @@
 (defun prolog-cut ()
   (prolog-simple-1 (concatenate 'string "!") :mode 1))
 
+;; this one is used for sure
+(defun map-marker-init ()
+  (prolog-simple "sem_map_inst(MapInst),!,marker_update(object(MapInst))." ))
+
 
 ;;--- other queries ---
 

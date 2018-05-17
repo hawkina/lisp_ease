@@ -60,7 +60,8 @@
          (?arm (get-hand)))
     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
       (cpl:top-level
-
+        ;; make sure the arms are not in the way
+        (pp-plans::park-arms)
         ;; move the robot to location
         (exe:perform (desig:an action
                                (type going)
@@ -79,6 +80,10 @@
                            (type picking-up)
                            (arm ?arm)
                            (object ?obj-desig))))
+
+        ;;remove later
+        ;; (move-object (make-poses "?PoseHandStart") 'ba-axes3)
+
         ;; pick up obj
         (exe:perform 
          (desig:an action
@@ -90,6 +95,8 @@
            :object-name (desig:desig-prop-value ?obj-desig :name)
            :arm ?arm))
 
+        
+        
         (print (desig:a location (pose ?place-pose)))
 
         ;; move to obj
@@ -128,7 +135,7 @@
         (exe:perform (desig:an motion
                                (type moving-tcp)
                                (left-target (desig:a location (pose ?pose)))))))))
-
+;; the basis of the plans was taken from Gayane Kazhoyan's "mobile-pick-and-place-plans" and adapted to the needs of this thesis. (link to original: https://github.com/cram2/cram/blob/master/cram_common/cram_mobile_pick_place_plans/src/pick-place-plans.lisp)
 ;; from mobile pick place ---------------------------------------------------
 (cpl:def-cram-function pick-up (?object-designator
                                 ?arm ?gripper-opening  ?grip-effort ?grasp

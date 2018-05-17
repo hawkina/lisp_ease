@@ -1,7 +1,5 @@
 (in-package :le)
 
-;;--------------------------- from tutorials ----------------------------
-
 ;;(make-poses "?PoseCameraStart")
 ;; move robot away from the original pose by this offset. 
 (defparameter *human-feet-offset* 0.0 ) ;; was 0.3 for Andreis Data
@@ -55,10 +53,11 @@
 
 
 ;; --- DESIG FACT GROUP --------------------------------------------------------------------
+;; the fact groups were taken from Gayane Kazhoyan's "mobile-pick-and-place-plans" and were adapted to the needs of this thesis. (link to original: https://github.com/cram2/cram/blob/master/cram_common/cram_mobile_pick_place_plans/src/pick-place-designators.lisp)
 
 (cram-prolog:def-fact-group ba-pnp-object-knowledge (object-rotationally-symmetric orientation-matters object-type-grasp)
 
-  ;; (cram-prolog:<- (object-rotationally-symmetric ?object-type)
+  ;; (cram-prolog:<- (object-rotationally-symmetric ?objectbull-type)
   ;;   (member ?object-type (:ba-muesli :ba-milk :ba-spoon :ba-cup  :ba-bowl)))
 
   (cram-prolog:<- (orientation-matters ?object-type)

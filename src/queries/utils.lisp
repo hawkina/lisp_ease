@@ -187,3 +187,189 @@
       (format nil "added: ~D out of: ~D ~%" c max)
       (move-object (make-poses "?PoseCameraStart") temp-name)))
 )
+
+
+;;; evaluation
+(defun move-obj-with-offset (x-offset y-offset object)
+(move-object 
+     (cl-tf:make-transform 
+      (cl-tf:make-3d-vector
+       (+
+        x-offset
+        (cl-tf:x
+         (cl-tf:translation
+          (make-poses "?PoseObjStart"))))
+       (+
+        y-offset
+        (cl-tf:y
+         (cl-tf:translation
+          (make-poses "?PoseObjStart"))))
+       (cl-tf:z
+        (cl-tf:translation 
+         (make-poses "?PoseObjStart"))))
+      (cl-tf:rotation
+       (make-poses "?PoseObjStart"))) object))
+;;--------------------------------------------------------------
+(defun demo-all-obj ()
+  (get-grasp-something-poses)
+  ;; muesli
+  (alternative-demo 'ba-muesli)
+  (execute-pick-and-place :ba-muesli)
+
+  ;; milk
+  (get-next-obj-poses 1)
+  (alternative-demo 'ba-milk)
+  (execute-pick-and-place :ba-milk)
+
+  ;; cup
+  (get-next-obj-poses 2)
+  (alternative-demo 'ba-cup)
+  (execute-pick-and-place :ba-cup)
+
+  ;; bowl
+  (get-next-obj-poses 3)
+  (alternative-demo 'ba-bowl)
+  (execute-pick-and-place :ba-bowl)
+
+  ;; fork
+  (get-next-obj-poses 4)
+  (alternative-demo 'ba-fork)
+  (execute-pick-and-place :ba-fork)
+  )
+
+(defun demo-spawn-obj-in-place ()
+  (get-grasp-something-poses)
+  ;; muesli
+  (alternative-demo 'ba-muesli)
+  
+  ;; milk
+  (get-next-obj-poses 1)
+  (alternative-demo 'ba-milk)
+
+  ;; cup
+  (get-next-obj-poses 2)
+  (alternative-demo 'ba-cup)
+
+  ;; bowl
+  (get-next-obj-poses 3)
+  (alternative-demo 'ba-bowl)
+
+  ;; fork
+  (get-next-obj-poses 4)
+  (alternative-demo 'ba-fork))
+
+(defun demo-all-pick-place ()
+  (get-next-obj-poses 0)
+  (execute-pick-and-place :ba-muesli)
+  (get-next-obj-poses 1)
+  
+  (execute-pick-and-place :ba-milk)
+  (get-next-obj-poses 2)
+  (execute-pick-and-place :ba-cup)
+  (get-next-obj-poses 3)
+  (execute-pick-and-place :ba-bowl)
+  (get-next-obj-poses 4)
+  (execute-pick-and-place :ba-fork))
+
+
+(defun spawn-without-transform ()
+  (get-next-obj-poses 0)
+  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-muesli)
+  (get-next-obj-poses 1)
+  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-milk)
+  (get-next-obj-poses 2)
+  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-cup)
+  (get-next-obj-poses 3)
+  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-bowl)
+  (get-next-obj-poses 4)
+  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-fork)
+
+  (move-to-object (set-grasp-base-pose (make-poses-without-transform "?PoseCameraStart")) (set-grasp-look-pose (make-poses-without-transform "?PoseObjStart"))))
+  
+
+(defun make-poses-without-transform (name &optional (poses-list *poses-list*))
+  (make-pose (cut:var-value (intern name) poses-list)))
+
+;;-------------------------
+(defun make-poses-with-quaternion (name &optional (poses-list *poses-list*))
+  (quaternion-w-flip
+   (make-pose (cut:var-value (intern name) poses-list))))
+(defun spawn-with-quaternion ()
+  (get-next-obj-poses 0)
+  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-muesli)
+  (get-next-obj-poses 1)
+  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-milk)
+  (get-next-obj-poses 2)
+  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-cup)
+  (get-next-obj-poses 3)
+  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-bowl)
+  (get-next-obj-poses 4)
+  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-fork)
+
+  (move-to-object (set-grasp-base-pose (make-poses-with-quaternion "?PoseCameraStart")) (set-grasp-look-pose (make-poses-with-quaternion "?PoseObjStart"))))
+
+
+;; move to utils?----------------------------------------------------------------------------------
+(defun move-head (pose)
+  (prolog:prolog `(and (btr:bullet-world ?world)
+                       (cram-robot-interfaces:robot ?robot )
+                       (btr:head-pointing-at ?world ?robot ,pose))))
+
+;;if in back 'cereal-5
+(defun is-in-view (name-of-object)
+  (prolog:prolog `(and (btr:bullet-world ?world)
+                              (cram-robot-interfaces:robot ?robot)
+                              (btr:visible ?world ?robot ,name-of-object))))
+;; move to util end--------------------------------------------------------------------------------
+
+
+
+
+; moves the given object to the given pose.
+; usage example: (move-object (pose-lists-parser '|?PoseObjEnd|))
+(defun move-object (transform obj)
+  (let* ((pose (cl-tf:transform->pose transform)))
+    (prolog:prolog `(and (btr:bullet-world ?world)
+                         (assert (btr:object-pose ?world ,obj ,pose))))))
+
+
+
+
+
+
+
+
+;;(make-poses "?PoseCameraStart")
+(defun move-robot (transform)
+  ;; make the transform a viable robot position
+  (let* ((pose (cl-tf:transform->pose  (remove-z transform )))
+         (quaternion (cl-tf:orientation pose))
+         (x nil)
+         (y nil))
+    ;; make quaternion
+    ;; make into matrix, get x and y values
+    (setq x (aref (cl-tf:quaternion->matrix quaternion) 0 2))
+    (setq y (aref (cl-tf:quaternion->matrix quaternion) 1 2))
+    (setq quaternion (cl-tf:axis-angle->quaternion (cl-tf:make-3d-vector 0 0 1) (atan y x)))
+    
+    (setq pose (cl-tf:make-pose
+                (cl-tf:origin pose)
+                quaternion))
+    
+    (prolog:prolog `(and (btr:bullet-world ?world)
+                         (assert (btr:object-pose ?world cram-pr2-description:pr2 ,pose))))))
+
+
+
+
+;;---------------------------
+;; functions which are not called by anyone anymore and might just get deleted: 
+(defun place-offset-transform ()
+  (let ()
+      (cl-tf:make-transform
+       (cl-tf:make-3d-vector 0.0 0.2 0.0)
+       (cl-tf:make-identity-rotation))))
+
+;parses the output from knowrob to a proper string which prolog can use
+(defun parse-str (str)
+  (concatenate 'string "'"  (remove #\' (string str)) "'"))
