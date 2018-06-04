@@ -1,91 +1,16 @@
 (in-package :le)
 
-;;(make-poses "?PoseCameraStart")
-;; move robot away from the original pose by this offset. 
-(defparameter *human-feet-offset* 0.0 ) ;; was 0.3 for Andreis Data
-
-(defun set-grasp-base-pose (transform)
-   ;; make the transform a viable robot position
-  (let* ((pose (cl-tf:transform->pose  (remove-z transform)))
-         (quaternion (cl-tf:orientation pose))
-         (x nil)
-         (y nil)
-         (?grasp-base-pose nil))
-    ;; make quaternion
-    ;; make into matrix, get x and y values
-    (setq x (aref (cl-tf:quaternion->matrix quaternion) 0 2))
-    (setq y (aref (cl-tf:quaternion->matrix quaternion) 1 2))
-    (setq quaternion (cl-tf:axis-angle->quaternion (cl-tf:make-3d-vector 0 0 1) (atan y x)))
-    
- (setq ?grasp-base-pose 
-               (cl-transforms-stamped:make-pose-stamped
-                "map"
-                0.0
-                (cl-tf:make-3d-vector
-                 (if (plusp (cl-tf:x (cl-tf:origin pose)))
-                     (- (cl-tf:x (cl-tf:origin pose)) *human-feet-offset*)
-                     (+ (cl-tf:x (cl-tf:origin pose)) *human-feet-offset*))
-                 (cl-tf:y (cl-tf:origin pose))
-                 0)
-                quaternion))))
-
-
-;;(make-poses "?PoseObjStart")
-(defun set-grasp-look-pose (transform)
-  (let* ((?grasp-look-pose nil))
-    (setq ?grasp-look-pose
-          (cl-transforms-stamped:make-pose-stamped
-           "map"
-           0.0
-           (cl-tf:origin (cl-tf:transform->pose transform))
-           (cl-tf:orientation (cl-tf:transform->pose transform))))))
-
-
-;;(make-poses "?PoseObjEnd")
-(defun set-place-pose (transform)
-  (let* ((?grasp-look-pose nil))
-    (setq ?grasp-look-pose
-          (cl-transforms-stamped:make-pose-stamped
-           "map"
-           0.0
-           (cl-tf:origin (cl-tf:transform->pose transform))
-           (cl-tf:make-identity-rotation)))))
-
-
 ;; --- DESIG FACT GROUP --------------------------------------------------------------------
 ;; the fact groups were taken from Gayane Kazhoyan's "mobile-pick-and-place-plans" and were adapted to the needs of this thesis. (link to original: https://github.com/cram2/cram/blob/master/cram_common/cram_mobile_pick_place_plans/src/pick-place-designators.lisp)
 
 (cram-prolog:def-fact-group ba-pnp-object-knowledge (object-rotationally-symmetric orientation-matters object-type-grasp)
 
-  ;; (cram-prolog:<- (object-rotationally-symmetric ?objectbull-type)
-  ;;   (member ?object-type (:ba-muesli :ba-milk :ba-spoon :ba-cup  :ba-bowl)))
-
   (cram-prolog:<- (orientation-matters ?object-type)
     (member ?object-type (:ba-fork)))
-
   (cram-prolog:<- (object-type-grasp :ba-fork :human-grasp))
-  ;; (cram-prolog:<- (object-type-grasp :ba-spoon :top))
-  ;; (<- (object-type-grasp :spoon :top))
-  ;; (<- (object-type-grasp :fork :top))
-  ;; (<- (object-type-grasp :knife :top))
-
   (cram-prolog:<- (object-type-grasp :ba-milk :human-grasp))
-
   (cram-prolog:<- (object-type-grasp :ba-cup :human-grasp))
-  ;; (<- (object-type-grasp :cup :side))
-  ;; (<- (object-type-grasp :cup :top))
-
-  ;; (<- (object-type-grasp :cereal :top))
-
-  ;; (cram-prolog:<- (object-type-grasp :ba-muesli :human-grasp))
   (cram-prolog:<- (object-type-grasp :ba-muesli :human-grasp))
-  ;;
- ;;(cram-prolog:<- (object-type-grasp :ba-muesli :back))
-  ;; (cram-prolog:<- (object-type-grasp :ba-muesli :front))
-  ;; (<- (object-type-grasp :breakfast-cereal :top))
-  ;; (<- (object-type-grasp :breakfast-cereal :back))
-  ;; (<- (object-type-grasp :breakfast-cereal :front))
-
   (cram-prolog:<- (object-type-grasp :ba-bowl :human-grasp)))
 
 (cram-prolog:def-fact-group pick-and-place-plans (desig:action-grounding)

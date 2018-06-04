@@ -27,7 +27,7 @@
 OPTIONAL NAME: Name of the object. If not set, the default name will be 'ba-bowl.
 RETURNS: Lazy list containing the created ba-bowl-object."
   (prolog:prolog `(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ,?name ((0 1 2) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ,?name ((0 1 3) (0 0 0 1))
                             :mass 0.2 :color (1 1 1) :mesh :ba-bowl)))))
 
 (defun add-cup (&optional (?name 'ba-cup))
@@ -35,7 +35,7 @@ RETURNS: Lazy list containing the created ba-bowl-object."
 OPTIONAL NAME: Name of the object. If not set, the default name will be 'ba-cup.
 RETURNS: Lazy list containing the created ba-cup-object."
   (prolog:prolog `(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ,?name ((0 2 2) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ,?name ((0 2 3) (0 0 0 1))
                             :mass 0.2 :color (1 1 0) :mesh :ba-cup)))))
 
 (defun add-muesli (&optional (?name 'ba-muesli))
@@ -43,7 +43,7 @@ RETURNS: Lazy list containing the created ba-cup-object."
 OPTIONAL NAME: Name of the object. If not set, the default name will be 'ba-muesli.
 RETURNS: Lazy list containing the created ba-muesli-object."
   (prolog:prolog `(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ,?name ((0 3 2) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ,?name ((0 3 3) (0 0 0 1))
                             :mass 0.2 :color (1 0 1) :mesh :ba-muesli)))))
 
 (defun add-fork (&optional (?name 'ba-fork))
@@ -51,7 +51,7 @@ RETURNS: Lazy list containing the created ba-muesli-object."
 OPTIONAL NAME: Name of the object. If not set, the default name will be 'ba-fork.
 RETURNS: Lazy list containing the created ba-fork-object."
   (prolog:prolog `(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ,?name ((0 4 2) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ,?name ((0 4 3) (0 0 0 1))
                             :mass 0.2 :color (0 0 1) :mesh :ba-fork)))))
 
 (defun add-milk (&optional (?name 'ba-milk))
@@ -59,7 +59,7 @@ RETURNS: Lazy list containing the created ba-fork-object."
 OPTIONAL NAME: Name of the object. If not set, the default name will be 'ba-milk.
 RETURNS: Lazy list containing the created ba-milk-object."
   (prolog:prolog `(and (btr:bullet-world ?world)
-                   (assert (btr:object ?world :mesh ,?name ((0 6 2) (0 0 0 1))
+                   (assert (btr:object ?world :mesh ,?name ((0 6 3) (0 0 0 1))
                             :mass 0.2 :color (1 0 0) :mesh :ba-milk)))))
 
 (defun add-axes (&optional (?name 'ba-axes))

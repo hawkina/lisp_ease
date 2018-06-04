@@ -3,10 +3,12 @@
 
 ;; get-info of an object
 (defun get-info (infoObj)
+  "returns contents of a specific field from the read out data."
   (cut:var-value (intern infoObj)  *poses-list*))
 
 ;; returns the hand used in the curretnly loaded episode
 (defun get-hand ()
+  "returns which hand was used to interact with the object"
   (if (search "Left" (string (get-info "?HandInstShortName")))
       :left
       (if (search "Right" (string (get-info "?HandInstShortName")))
@@ -15,33 +17,27 @@
 
 
 ;; killing object from bullet world. ex: 'ba-axes
-(defun kill-obj (object) 
+(defun kill-obj (object)
+  "Removes an object from the bullet world."
   (btr-utils:kill-object object)) 
 
-;;-------------------------------------------------------------------------------------
 ;; all kind of transform utils
 
 (defun make-transform-hand-std-pr2 ()
+  "Make a transform from human hand to the standart pr2"
   (cl-tf:transform* (make-poses "?PoseHandStart")
                     (human-to-robot-hand-transform)
                     cram-pr2-description::*standard-to-pr2-gripper-transform*))
 
-(defun get-robot-in-map-pose () 
+(defun get-robot-in-map-pose ()
+  "Get the position of the robot within the map frame."
   (cl-tf:transform->transform-stamped "map" "base_footprint" 0.0
                                       (cl-tf:pose->transform
                                        (btr:pose
                                         (btr:get-robot-object)))))
 
-;; the given pose is the one copy pasted from where he tries to go. this is for vvisualization
-(defun make-map-to-gripper-transform ()
-  (cl-tf:transform*
-   (get-robot-in-map-pose)
-   (cl-tf:make-stamped-transform "base_footprint" "r_gripper_tool_frame" 0.0 
-                                 (cl-tf:make-3d-vector 0.6207556803418275d0 -0.09483694591892577d0 0.9474515448891849d0)
-                                 (cl-tf:make-quaternion -0.08704018159324084d0 -0.0678501392353959d0 -0.912502320545953d0 -0.3939033077712149d0)))
-  )
-
 (defun make-transf-manually ()
+  "Calculating the grasping transform manually for debugging puposes."
   ;; inverse of map to object, therefore object to map
   ;; object T map
   (cram-tf:transform-stamped-inv  (cl-tf:transform->stamped-transform "map" "ba_muesli"  0.0 (make-poses "?PoseObjStart")))
@@ -53,42 +49,23 @@
   (human-to-robot-hand-transform)
   )
 
-
-
-
-
-
 ;; look up transfrom from tf. ex: "l_wrist_roll_link" "l_gripper_l_finger_tip_link" 
 (defun lookup-tf-transform (parent_frame child_frame)
+  "Looks up the tf transform."
   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment 
     (cram-tf::lookup-transform cram-tf::*transformer* parent_frame child_frame)))
-;;------------------------------------------------------------------------------------------
-;; plans
+
 
 (defun alternative-demo (object)
+  "Moves the object and robot to their respective locations at the beginning of the episode. . "
   (move-object  (make-poses "?PoseObjStart") object)
   ;; (move-to-object (set-grasp-base-pose (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))
   )
 
 
-
-
-;; placing doesnt work in the conventional way. but calling this in the repl works:
-;; (defun placing-b ()
-;;   (defvar ?test (set-place-pose (make-poses "?PoseObjEnd")))
-;;    (let* ()
-;;     (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
-;;       (cpl:top-level
-;;        (exe:perform
-;;         (desig:an action
-;;                   (type placing)
-;;                   (arm :left)
-;;                   (object ?desig-saver)
-;;                   (target (desig:a location (pose ?test)))))))))
-
-;;-------------------------------------------------------------------------------------------
 ;; new now! maybe rename...
 (defun apply-bullet-transform (transform)
+  "Applies the transform of the VR to bullet world and the rotation."
   (cl-tf:transform*
    (cl-tf:make-transform (cl-tf:make-3d-vector -2.65 -0.7 0.0)
                          (cl-tf:axis-angle->quaternion
@@ -97,12 +74,15 @@
    transform))
 
 (defun apply-bullet-rotation (transform)
+  "Applies only the offset rotation between the VR and the bullet world."
   (cl-tf:transform*
    (cl-tf:make-transform (cl-tf:make-3d-vector 0.0 0.0 0.0)
                          (cl-tf:axis-angle->quaternion
                           (cl-tf:make-3d-vector 0 0 1)
                           pi)) 
    transform))
+
+
 
 (defun apply-rotation (transform)
   (cl-tf:transform*
@@ -113,18 +93,10 @@
    transform))
 
 
-;; flip y axes and y of quaternion
-(defun flip-left-to-right-handedness (transform)
-  (cl-tf:make-transform
-   (cl-tf:translation transform)
-   (cl-tf:make-quaternion
-    (cl-tf:x (cl-tf:rotation transform))
-    (- (cl-tf:y (cl-tf:rotation transform)))
-    (cl-tf:z (cl-tf:rotation transform))
-    (cl-tf:w (cl-tf:rotation transform)))))
 
 ;;- more bullet checking/utils stuff
 (defun check-obj-in-world (object-name)
+  "Check if the object is in the current world."
   (btr:object btr:*current-bullet-world* object-name))
 
 
@@ -138,15 +110,10 @@
   (prolog:prolog '(and (btr:bullet-world ?world)
                    (btr:simulate ?world 100))))
 
-;; just when I want to spawn all of them 
-(defun spawn-all-own-obj ()
-  (add-bowl)
-  (add-cup)
-  (add-muesli)
-  (add-fork)
-  (add-milk))
+
 
 (defun set-axes ()
+  "Sets the axes to the robots hands and to the position of the grasping pose of the human. "
   (let* ((transf_r)
          (transf_l))
     (setq transf_r (car
@@ -178,6 +145,7 @@
 ;; for spawning boxes on the edges of the table
 ;; or generally to be used when more then one object of one kind needs to be spawned somewhere. 
 (defun table-calibration (max)
+  "Function used to calibrate offset between the open ease and the bullet world. "
   (let (temp-name)
     (get-grasp-something-poses)
     (dotimes (c max )
@@ -191,6 +159,7 @@
 
 ;;; evaluation
 (defun move-obj-with-offset (x-offset y-offset object)
+  "Moves an object to a given x y offset from it's starting position. "
 (move-object 
      (cl-tf:make-transform 
       (cl-tf:make-3d-vector
@@ -210,137 +179,60 @@
       (cl-tf:rotation
        (make-poses "?PoseObjStart"))) object))
 ;;--------------------------------------------------------------
-(defun demo-all-obj ()
-  (get-grasp-something-poses)
-  ;; muesli
-  (alternative-demo 'ba-muesli)
-  (execute-pick-and-place :ba-muesli)
-
-  ;; milk
-  (get-next-obj-poses 1)
-  (alternative-demo 'ba-milk)
-  (execute-pick-and-place :ba-milk)
-
-  ;; cup
-  (get-next-obj-poses 2)
-  (alternative-demo 'ba-cup)
-  (execute-pick-and-place :ba-cup)
-
-  ;; bowl
-  (get-next-obj-poses 3)
-  (alternative-demo 'ba-bowl)
-  (execute-pick-and-place :ba-bowl)
-
-  ;; fork
-  (get-next-obj-poses 4)
-  (alternative-demo 'ba-fork)
-  (execute-pick-and-place :ba-fork)
-  )
-
-(defun demo-spawn-obj-in-place ()
-  (get-grasp-something-poses)
-  ;; muesli
-  (alternative-demo 'ba-muesli)
-  
-  ;; milk
-  (get-next-obj-poses 1)
-  (alternative-demo 'ba-milk)
-
-  ;; cup
-  (get-next-obj-poses 2)
-  (alternative-demo 'ba-cup)
-
-  ;; bowl
-  (get-next-obj-poses 3)
-  (alternative-demo 'ba-bowl)
-
-  ;; fork
-  (get-next-obj-poses 4)
-  (alternative-demo 'ba-fork))
-
-(defun demo-all-pick-place ()
-  (get-next-obj-poses 0)
-  (execute-pick-and-place :ba-muesli)
-  (get-next-obj-poses 1)
-  
-  (execute-pick-and-place :ba-milk)
-  (get-next-obj-poses 2)
-  (execute-pick-and-place :ba-cup)
-  (get-next-obj-poses 3)
-  (execute-pick-and-place :ba-bowl)
-  (get-next-obj-poses 4)
-  (execute-pick-and-place :ba-fork))
 
 
-(defun spawn-without-transform ()
-  (get-next-obj-poses 0)
-  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-muesli)
-  (get-next-obj-poses 1)
-  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-milk)
-  (get-next-obj-poses 2)
-  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-cup)
-  (get-next-obj-poses 3)
-  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-bowl)
-  (get-next-obj-poses 4)
-  (move-object  (make-poses-without-transform "?PoseObjStart") 'ba-fork)
 
-  (move-to-object (set-grasp-base-pose (make-poses-without-transform "?PoseCameraStart")) (set-grasp-look-pose (make-poses-without-transform "?PoseObjStart"))))
-  
 
+(defun add-pos-offset-to-transform (transform x y z)
+  "Adds a given offset to a given transform."
+  (cl-tf:make-transform
+     (cl-tf:make-3d-vector
+      (+ x (cl-tf:x (cl-tf:translation transform)))
+      (+ y (cl-tf:y (cl-tf:translation transform)))
+      (+ z (cl-tf:z (cl-tf:translation transform))))
+     (cl-tf:rotation transform)))
+
+;; name "?PoseObjStart"
 (defun make-poses-without-transform (name &optional (poses-list *poses-list*))
+  "Makes poses without the application of the transform, which is needed to display them in the bullet world correctly. This is used to demonstrate the offset between the two worlds. "
   (make-pose (cut:var-value (intern name) poses-list)))
 
-;;-------------------------
+
 (defun make-poses-with-quaternion (name &optional (poses-list *poses-list*))
+  "Makes poses with the fixed quaternion."
   (quaternion-w-flip
    (make-pose (cut:var-value (intern name) poses-list))))
-(defun spawn-with-quaternion ()
-  (get-next-obj-poses 0)
-  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-muesli)
-  (get-next-obj-poses 1)
-  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-milk)
-  (get-next-obj-poses 2)
-  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-cup)
-  (get-next-obj-poses 3)
-  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-bowl)
-  (get-next-obj-poses 4)
-  (move-object  (make-poses-with-quaternion "?PoseObjStart") 'ba-fork)
-
-  (move-to-object (set-grasp-base-pose (make-poses-with-quaternion "?PoseCameraStart")) (set-grasp-look-pose (make-poses-with-quaternion "?PoseObjStart"))))
 
 
-;; move to utils?----------------------------------------------------------------------------------
+
 (defun move-head (pose)
+  "Moves the head of the robot to the given POSE."
   (prolog:prolog `(and (btr:bullet-world ?world)
                        (cram-robot-interfaces:robot ?robot )
                        (btr:head-pointing-at ?world ?robot ,pose))))
 
 ;;if in back 'cereal-5
 (defun is-in-view (name-of-object)
+  "Checks if the object is in view of the robot.
+NAME-OF-OBJECT: The name of the object instance, for which it should be checked if it is still in view. "
   (prolog:prolog `(and (btr:bullet-world ?world)
                               (cram-robot-interfaces:robot ?robot)
                               (btr:visible ?world ?robot ,name-of-object))))
-;; move to util end--------------------------------------------------------------------------------
-
-
-
 
 ; moves the given object to the given pose.
 ; usage example: (move-object (pose-lists-parser '|?PoseObjEnd|))
 (defun move-object (transform obj)
+  "Moves an object to the desired transform.
+TRANSFORM: The transform describing the position to which an object should be moved.
+OBJ: The object which is supposed to be moved."
   (let* ((pose (cl-tf:transform->pose transform)))
     (prolog:prolog `(and (btr:bullet-world ?world)
                          (assert (btr:object-pose ?world ,obj ,pose))))))
 
 
-
-
-
-
-
-
 ;;(make-poses "?PoseCameraStart")
 (defun move-robot (transform)
+  "Moves the robot to a given position which is described by the given transform."
   ;; make the transform a viable robot position
   (let* ((pose (cl-tf:transform->pose  (remove-z transform )))
          (quaternion (cl-tf:orientation pose))
@@ -361,15 +253,37 @@
 
 
 
-
-;;---------------------------
-;; functions which are not called by anyone anymore and might just get deleted: 
+ 
 (defun place-offset-transform ()
+ "Creates a transform which describes and offset for placing an object. "
   (let ()
       (cl-tf:make-transform
        (cl-tf:make-3d-vector 0.0 0.2 0.0)
        (cl-tf:make-identity-rotation))))
 
-;parses the output from knowrob to a proper string which prolog can use
+
 (defun parse-str (str)
+  "parses the output from knowrob to a proper string which prolog can use."
   (concatenate 'string "'"  (remove #\' (string str)) "'"))
+
+
+
+(defun transform-to-pose-stamped (transform)
+  "Takes a transform and returnes a pose stamped without any changes."
+  (cl-tf:make-pose-stamped
+   "map"
+   0.0
+   (cl-tf:translation transform)
+   (cl-tf:rotation transform)))
+
+
+;;;------
+(defun move-toso-up (?angle)
+  "Moves up the torso of the robot by the given angle. The robot should do this automatically during picking and placing actions, but for debugging purposes this can be useful. 
+?ANGLE: Angle, by which the robot should move up his torso."
+   (proj:with-projection-environment pr2-proj::pr2-bullet-projection-environment
+           (cpl:top-level
+             (exe:perform
+              (desig:a motion (type moving-torso) (joint-angle ?angle))))))
+
+

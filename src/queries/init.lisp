@@ -7,6 +7,8 @@
 ;; care to give the right rcg stamp
 ;; rcg_c is for finding out the displacement
 ;; rcg_f has the to date better grasps
+;; eval2 has best full set pick and place
+;; rcg_d different grasps
 (defun init-episode ()
   (start-ros-node "lisp_ease")
   (register-ros-package "knowrob_robcog")
@@ -77,3 +79,25 @@
  ;;              `(and (btr:bullet-world ?world)
  ;;                    (assert (btr:object ?world :semantic-map no-urdf-kitchen ((0 0 0) (0 0 0 1)) )))))
  )
+
+
+(defun init-reset-sim ()
+  "Resets the simulation, but can also be used to initialize it (although I prefer to initilize it manually so I can see where it fails if it does.) Spawns all the objects which are necessary for the current scenario (Meaning: Kitchen, Robot, Muesli, Milk, Cup, Bowl, Fork and 3 Axis objects for debugging."
+  (init-episode)
+  (init-bullet-world)
+  (add-bowl)
+  (add-muesli)
+  (add-axes)
+  (add-fork)
+  (add-cup)
+  (add-milk)
+  
+  ;;axes 3
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh ba-axes3 ((2 2 1) (0 0 0 1))
+                            :mass 0.2 :color (1 0 0) :mesh :ba-axes))))
+  ;; axes 2 
+  (prolog:prolog '(and (btr:bullet-world ?world)
+                   (assert (btr:object ?world :mesh ba-axes2 ((2 2 1) (0 0 0 1))
+                            :mass 0.2 :color (0 1 0) :mesh :ba-axes)))))
+

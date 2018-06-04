@@ -1,5 +1,6 @@
 (in-package :le)
 
+;; Incomplete and experimental code for implementing gaussians
 (defvar *gaussian-poses-list* nil)
 
 ;; nr-poses: number of poses one wants to be read out from the data
@@ -9,7 +10,7 @@
   (setq *gaussian-poses-list* nil)
   (dotimes (c nr-poses )
     (get-next-obj-poses c)
-    (push (cl-tf:pose-stamped->pose (set-grasp-base-pose (apply-bullet-transform-old  (make-poses "?PoseCameraStart")))) *gaussian-poses-list*)
+    (push (cl-tf:pose-stamped->pose (set-grasp-base-pose (apply-bullet-transform  (make-poses "?PoseCameraStart")))) *gaussian-poses-list*)
   ))
 
 
