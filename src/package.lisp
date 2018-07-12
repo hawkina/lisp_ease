@@ -1,3 +1,3 @@
-(defpackage :queries-pkg
+(defpackage :lisp-ease-pkg
 	(:nicknames :le)
   (:use :roslisp :cl  :json-prolog #:cram-object-interfaces))
