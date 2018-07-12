@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 
 ;; --- DESIG FACT GROUP --------------------------------------------------------------------
 ;; the fact groups were taken from Gayane Kazhoyan's "mobile-pick-and-place-plans" and were adapted to the needs of this thesis. (link to original: https://github.com/cram2/cram/blob/master/cram_common/cram_mobile_pick_place_plans/src/pick-place-designators.lisp)

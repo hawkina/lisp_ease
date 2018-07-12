@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 
 ;;; a human feet offset. Since the human feet are a lot smaller then the robots
 ;;; base, this offset can be added in order to prevent the robot from crashing

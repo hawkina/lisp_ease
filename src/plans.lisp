@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 ;;------------------- from tutorials ----------------------
 ;;example call: (move-to-object (set-grasp-base-pose
 ;; (make-poses "?PoseCameraStart")) (set-grasp-look-pose (make-poses "?PoseObjStart")))

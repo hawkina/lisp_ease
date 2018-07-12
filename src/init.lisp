@@ -7,7 +7,7 @@
 ;;; rcg_f has the to date better grasps
 ;;; eval2 has best full set pick and place
 ;;; rcg_d different grasps
-(in-package :le)
+(in-package :kvr)
 
 (defun init-episode ()
   (start-ros-node "lisp_ease")

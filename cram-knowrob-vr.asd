@@ -1,4 +1,4 @@
-(asdf:defsystem lisp-ease
+(asdf:defsystem cram-knowrob-vr
 	:depends-on (roslisp
                cram-language
                cram-json-prolog

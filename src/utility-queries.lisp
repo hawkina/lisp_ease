@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 ;; TODO maybe remove this? They are not really necessary anymore?
 ;; --- queries important for initialization ---
 (defun register-ros-package (package-name)

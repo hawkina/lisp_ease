@@ -4,7 +4,7 @@
 ;;; without the usage of these functions. Also there are variations within the
 ;;; data representation of OpenEase and Bulelt World, these functions also take
 ;;; care of that. 
-(in-package :le)
+(in-package :kvr)
 
 
 (defun quaternion-w-flip (pose)

@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 ;; usefull bullet world infos
 
 ;; get-info of an object

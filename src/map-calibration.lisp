@@ -13,7 +13,7 @@
 ;;; 3d-vector -2.65 -0.7 0.0 rotation around z axis value: pi
 
 
-(in-package :le)
+(in-package :kvr)
 ;; TODO: this doesn't quite work yet?? <<< check if it does
 (defun get-all-food-drink-poses ()
   "Extracts all the positions of the cereals and milks and spawns the according objects. "

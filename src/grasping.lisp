@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 
 ;; orientation source: cram_knowrob_pick_place
 

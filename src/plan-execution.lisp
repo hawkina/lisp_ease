@@ -1,4 +1,4 @@
-(in-package :le)
+(in-package :kvr)
 
 (defun execute-pick-and-place (type)
   "Executes the pick and place plan on an object of the given type.

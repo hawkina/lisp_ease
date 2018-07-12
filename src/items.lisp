@@ -4,7 +4,7 @@
 ;;; The objects are NOT spawned at the 0 0 0 coordinate.
 ;;; They each have different spawning points.
 
-(in-package :le)
+(in-package :kvr)
 ;; appends the newly defined objects in the *mesh-files* variable to the
 ;; *mesh-files* of btr, so that they can be loaded
 ;; NOTE (Gaya)  If this does not work or compile, add the second argument --

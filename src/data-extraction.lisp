@@ -1,6 +1,6 @@
 ;;; Contains all the functions necessary to extract data from OpenEase into CRAM.
 ;;; NOTE: Just the data extraction is here. Its manipulation and adjustments are in the openase-to-bullet.lisp file
-(in-package :le)
+(in-package :kvr)
 
 ; TODO is there a more elegant solution for this? 
 ; A lazy list of all the data extracted from OpenEase for the current episode. Mainly poses.
